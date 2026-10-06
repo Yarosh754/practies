@@ -34,6 +34,24 @@ services:
     networks:
       - practics
 
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: practics-backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: arosv754
+      DB_NAME: practics
+    ports:
+      - "9100:3000"
+    depends_on:
+      - postgres
+    networks:
+      - practics
+
 networks:
   practics:
     driver: bridge
