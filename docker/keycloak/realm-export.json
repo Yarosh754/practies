@@ -38,11 +38,17 @@
       "serviceAccountsEnabled": false,
       "rootUrl": "http://localhost:9000",
       "baseUrl": "http://localhost:9000",
-      "redirectUris": ["http://localhost:9000/*"],
-      "webOrigins": ["http://localhost:9000"],
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:9000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:9000"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:9000/*"
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://localhost:9000/*"
       }
     },
     {
