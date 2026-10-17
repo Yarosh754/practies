@@ -1,0 +1,110 @@
+.home-main-container {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 32px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #353c5f;
+}
+
+.home-header-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.p-home-ads {
+    font-size: 22px;
+    font-weight: 600;
+    color: #353c5f;
+    margin: 0;
+    margin-bottom: 12px;
+}
+
+.home-ads-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.ad-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.home-filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+.home-select-container {
+    padding: 9px 36px 9px 14px;
+    background: #ffffff;
+    border: 1px solid #cdd6dd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    color: #353c5f;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url('/icons/select-icon.png');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px; 
+    min-width: 180px;
+    transition: border-color 0.15s ease;
+}
+.home-select-container:hover {
+    border-color: #0abb72;
+}
+.home-select-container:focus {
+    border-color: #0abb72;
+}
+.home-select-container.active {
+    border-color: #0abb72;
+}
+.home-select-container option {
+    padding: 10px;
+    color: #353c5f;
+}
+
+.home-favorite-toggle {
+    padding: 9px 16px;
+    background: #ffffff;
+    border: 1px solid #cdd6dd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    color: #353c5f;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+.home-favorite-toggle:hover {
+    border-color: #0abb72;
+    color: #0abb72;
+}
+.home-favorite-toggle.active {
+    color: #0abb72;
+    border-color: #0abb72;
+}
+
+.home-clear-button {
+    margin-left: auto;
+    padding: 9px 16px;
+    background: #ffffff;
+    border: 1px solid #cdd6dd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    color: #353c5f;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.home-clear-button:hover {
+    color: #e24444;
+    border-color: #e24444;
+}

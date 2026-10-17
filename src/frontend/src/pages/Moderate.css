@@ -1,0 +1,32 @@
+.moderate-main-container {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 32px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #353c5f;
+}
+
+.moderate-header-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.p-moderate-ads {
+    font-size: 22px;
+    font-weight: 600;
+    color: #353c5f;
+    margin: 0;
+}
+
+.moderate-ads-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.p-moderate-empty {
+    font-size: 15px;
+    color: #6b7a90;
+    padding: 24px 0;
+}

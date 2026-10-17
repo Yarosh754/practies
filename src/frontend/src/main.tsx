@@ -4,12 +4,18 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
+import { AdProvider } from './contexts/AdContext';
+import { FavoritesProvider } from './contexts/FavoriteContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <AdProvider>
+          <FavoritesProvider>
+            <App />
+          </FavoritesProvider>
+        </AdProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

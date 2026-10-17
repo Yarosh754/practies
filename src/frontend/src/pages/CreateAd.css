@@ -1,0 +1,134 @@
+.createAd-main-container {
+    max-width: 720px;
+    margin: 32px auto;
+    padding: 0 32px;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #353c5f;
+}
+
+.createAd-header-container {
+    margin-bottom: 24px;
+}
+.p-createAd {
+    font-size: 24px;
+    font-weight: 700;
+    color: #353c5f;
+    margin: 0;
+}
+.createAd-empty {
+    font-size: 15px;
+    color: #6b7a90;
+    padding: 40px 0;
+    text-align: center;
+}
+
+.createAd-form {
+    background: #ffffff;
+    border: 1px solid #e5eaee;
+    border-radius: 14px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.createAd-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #353c5f;
+}
+
+.createAd-input,
+.createAd-textarea,
+.createAd-select {
+    padding: 11px 14px;
+    border: 1px solid #cdd6dd;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #353c5f;
+    background-color: #ffffff;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.createAd-input:focus,
+.createAd-textarea:focus,
+.createAd-select:focus {
+    border-color: #0abb72;
+}
+
+.createAd-input::placeholder,
+.createAd-textarea::placeholder {
+    color: #a7b0bd;
+}
+
+.createAd-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.createAd-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('/icons/select-icon.png');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.createAd-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.createAd-cancel-button {
+    padding: 11px 20px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #cdd6dd;
+    color: #353c5f;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.createAd-cancel-button:hover {
+    border-color: #e24444;
+    color: #e24444;
+    transform: scale(1.05);
+}
+.createAd-cancel-button:active {
+    border-color: #e24444;
+    color: #e24444;
+    transform: scale(0.95);
+}
+.createAd-submit-button {
+    padding: 11px 24px;
+    border-radius: 8px;
+    background: #0abb72;
+    border: 1px solid #0abb72;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.createAd-submit-button:hover {
+    background: #09a866;
+    transform: scale(1.05);
+}
+.createAd-submit-button:active {
+    background: #09a866;
+    transform: scale(0.95);
+}

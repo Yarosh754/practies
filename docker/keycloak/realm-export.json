@@ -97,6 +97,22 @@
         }
       ],
       "realmRoles": ["user"]
+    },
+    {
+      "username": "user1",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "user1@practics.local",
+      "firstName": "User1",
+      "lastName": "Practics1",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user1",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
     }
   ]
 }

@@ -1,10 +1,14 @@
 import {Link, useNavigate} from 'react-router-dom';
 import {useAuth} from '../contexts/AuthContext'
+import './Header.css';
 
+const PERSONAL_ACCOUNT = '/icons/personal-account.png';
+const NOTICE = '/icons/notice.png';
 
 function Header() {
   const {authtrue, user, keycloak} = useAuth();
   const navigate = useNavigate();
+  const isAdmin = keycloak?.realmAccess?.roles.includes('admin');
   
   const handleLogin = () =>{
     navigate('/auth');
@@ -16,22 +20,41 @@ function Header() {
 
   return (
     <header>
-        <div className="container-header">
-            <div className="logo">Kufar</div>
-            <nav className="nav">
+        <div className="header-main-container">
+            <div className="header-logo">
+                <Link to='/'>Kufar</Link>
+            </div>
+            {authtrue && (
+                <button className='header-notice'>
+                    <img src={NOTICE} alt=""  className="header-notice-img"/>
+                </button>
+            )}
+            <nav className="header-nav">
+                {isAdmin && <Link to='/moderate'>Модерация</Link>}
+                {user && (
+                    <Link to='/account'>
+                        <img src={PERSONAL_ACCOUNT} alt=""  className="header-account-img"/>
+                        <div className='header-user'>{user.firstName}</div>
+                    </Link>
+                )}
+                {authtrue && <Link to='/myAds'>Мои объявления</Link>}
+                {authtrue && <Link to='/'>Сообшения</Link>}
                 <Link to='/'>Объявления</Link>
-                <Link to='/account'>Личный кабинет</Link>
-                <div>
+                <div className='header-buttons'>
+                    {authtrue && (
+                        <button className='header-createAd-button'>
+                            <Link to='/createAd'>Подать объявление</Link>
+                        </button>
+                    )}
                     {!authtrue ? (
-                        <button onClick={handleLogin}>
+                        <button className='header-login-button' onClick={handleLogin}>
                             Вход
                         </button>) : 
-                        <button onClick={handleLogout}>
+                        <button className='header-logout-button' onClick={handleLogout}>
                             Выход
                         </button>
                     }
                 </div>
-                {user && <div>{user.username}</div>}
             </nav>
         </div>
     </header>

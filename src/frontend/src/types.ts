@@ -1,0 +1,30 @@
+export type AdStatus =
+  | 'ACTIVE'
+  | 'MODERATION'
+  | 'SOLD'
+  | 'DELETE'
+  | 'REJECTED';
+
+export interface Option {
+  value: string;
+  label: string;
+}
+
+export interface Ad {
+  id: string;
+  title: string;
+  image: string;
+  description: string;
+  price: number;
+  categoryId: string;
+  status: AdStatus;
+  location: string;
+  authorId: string;
+  phone: string;
+  createdAt: string;
+}
+
+export interface FavoriteUser {
+  userId: string;
+  adId: string;
+}
