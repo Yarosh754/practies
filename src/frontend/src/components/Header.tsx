@@ -1,5 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom';
 import {useAuth} from '../contexts/AuthContext'
+import { useNotifications } from '../contexts/NotificationsContext';
 import './Header.css';
 
 const PERSONAL_ACCOUNT = '/icons/personal-account.png';
@@ -9,6 +10,7 @@ function Header() {
   const {authtrue, user, keycloak} = useAuth();
   const navigate = useNavigate();
   const isAdmin = keycloak?.realmAccess?.roles.includes('admin');
+  const { unreadCount } = useNotifications();
   
   const handleLogin = () =>{
     navigate('/auth');
@@ -25,9 +27,10 @@ function Header() {
                 <Link to='/'>Kufar</Link>
             </div>
             {authtrue && (
-                <button className='header-notice'>
-                    <img src={NOTICE} alt=""  className="header-notice-img"/>
-                </button>
+                <Link to="/notifications" className="header-notice">
+                    <img src={NOTICE} alt="Уведомления" className="header-notice-img" />
+                    {unreadCount > 0 && <span className="header-notice-badge">{unreadCount}</span>}
+                </Link>
             )}
             <nav className="header-nav">
                 {isAdmin && <Link to='/moderate'>Модерация</Link>}
@@ -38,7 +41,7 @@ function Header() {
                     </Link>
                 )}
                 {authtrue && <Link to='/myAds'>Мои объявления</Link>}
-                {authtrue && <Link to='/'>Сообшения</Link>}
+                {authtrue && <Link to='/'>Сообщения</Link>}
                 <Link to='/'>Объявления</Link>
                 <div className='header-buttons'>
                     {authtrue && (

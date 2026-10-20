@@ -5,6 +5,8 @@ import { useAds } from '../contexts/AdContext';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { seedLocations } from '../storage/seedAd';
+import { useNotifications } from '../contexts/NotificationsContext';
+import { toast } from 'sonner';
 
 const BUTTON_RIGHT = '/icons/button-right.png';
 const BUTTON_LEFT = '/icons/button-left.png';
@@ -19,8 +21,9 @@ function AdMain() {
   const isAdmin = keycloak?.realmAccess?.roles.includes('admin');
 
   const ad = ads.find((i) => i.id === id);
+  const { addNotification } = useNotifications();
 
-  const arrayPhoto = [BUTTON_LEFT];
+  const arrayPhoto = [ad?.image];
   
   const changePhotoLeft = () =>{
     if(indexPhoto===0){
@@ -45,11 +48,33 @@ function AdMain() {
     setPhoneOpen(true)
   }
 
+  const handleSoldAd =(adId: string) =>{
+    changeStatus(adId, 'SOLD');
+    toast.success('Объявление продано');
+    addNotification(user.username, 'Объявление продано');
+  }
+
   const handleDeleteAd = (adId: string) => {
     if (!confirm('Удалить объявление?')) return;
     changeStatus(adId, 'DELETE'); 
+    toast.success('Объявление удалено');
+    addNotification(user.username, 'Объявление удалено');
     navigate('/myAds');
   };
+
+  const handleApprove = (adId: string, author: string) =>{
+    changeStatus(adId, 'ACTIVE');
+    toast.success('Объявление одобрено');
+    addNotification(author, 'Объявление прошло модерацию и опубликовано');
+    navigate('/moderate'); 
+  }
+
+  const handleNotApprove = (adId: string, author: string) =>{
+    changeStatus(adId, 'REJECTED');
+    toast.success('Объявление откланено');
+    addNotification(author, 'Объявление не прошло модерацию и было откланено');
+    navigate('/moderate'); 
+  }
 
   if (!ad) {
     return (
@@ -70,7 +95,7 @@ function AdMain() {
             </button>
             <img 
               src={arrayPhoto[indexPhoto]} 
-              className="adComponent-img"
+              className="adMain-img"
               alt=""
             />
             <button className='adMain-button-right' onClick={changePhotoRight}>
@@ -101,15 +126,13 @@ function AdMain() {
                 </div>
             )}
 
-            {authtrue && ad.authorId === user?.username &&(
+            {authtrue && ad.authorId === user?.username && ad.status === 'ACTIVE' &&(
                 <div className='adMain-owner'>
                     <p className='p-adMain-owner-title'>Мои действия</p>
                     <div className='adMain-owner-buttons'>
-                        {ad.status === 'ACTIVE' && (
-                            <button type='button' className='adMain-sold-button' onClick={() => changeStatus(ad.id, 'SOLD')}>
-                                Продал
-                            </button>
-                        )}
+                        <button type='button' className='adMain-sold-button' onClick={() => handleSoldAd(ad.id)}>
+                            Продал
+                        </button>
 
                         <button type='button' className='adMain-delete-button' onClick={() => handleDeleteAd(ad.id)}>
                             Удалить
@@ -126,10 +149,10 @@ function AdMain() {
                 <div className='adMain-admin'>
                     <p className='p-adMain-admin-title'>Модерация</p>
                     <div className='adMain-admin-buttons'>
-                        <button type='button' className='adMain-confirm-button' onClick={() => {changeStatus(ad.id, 'ACTIVE'); navigate('/moderate')}}>
+                        <button type='button' className='adMain-confirm-button' onClick={() => handleApprove(ad.id, ad.authorId)}>
                             Принять
                         </button>
-                        <button type='button' className='adMain-noconfirm-button' onClick={() => {changeStatus(ad.id , 'REJECTED'); navigate('/moderate')}}>
+                        <button type='button' className='adMain-noconfirm-button' onClick={() => handleNotApprove(ad.id, ad.authorId)}>
                             Отклонить
                         </button>
                     </div>

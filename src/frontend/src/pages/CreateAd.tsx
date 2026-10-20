@@ -4,6 +4,8 @@ import { useAds } from '../contexts/AdContext';
 import { useAuth } from '../contexts/AuthContext';
 import { seedCategories, seedLocations } from '../storage/seedAd';
 import './CreateAd.css';
+import { toast } from 'sonner';
+import { useNotifications } from '../contexts/NotificationsContext';
 
 interface FormState {
   title: string;
@@ -22,6 +24,8 @@ function CreateAd() {
   const { ads, addAd, updateAd } = useAds();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const { addNotification } = useNotifications();
 
   const [form, setForm] = useState<FormState>({
     title: '',
@@ -93,6 +97,10 @@ function CreateAd() {
     } else {
       addAd(createad);
     }
+
+    const message = isEdit ? 'Объявление отредактировано и отправлено на модерацию' : 'Объявление создано и отправлено на модерацию';
+    toast.success(message);
+    addNotification(user.username, message);
 
     navigate('/myAds');
   };

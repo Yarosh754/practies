@@ -7,6 +7,7 @@ import AdMain from './pages/AdMain';
 import MyAds from './pages/MyAds';
 import CreateAd from './pages/CreateAd';
 import Moderate from './pages/Moderate';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path='/createad' element={<CreateAd />} />
         <Route path='/createad/:id' element={<CreateAd />} />
         <Route path='/moderate' element={<Moderate />} />
+        <Route path='/notifications' element={<Notifications />} />
       </Routes>
     </>
   )

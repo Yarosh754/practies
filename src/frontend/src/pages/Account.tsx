@@ -21,7 +21,7 @@ function Account() {
       </div>
       <div className="account-exit-container">
         <button onClick={handleLogout} className="account-exit-button">
-          Выйти
+          Выход
         </button>
       </div>
     </div>

@@ -5,7 +5,6 @@ import { seedLocations } from "../storage/seedAd";
 import { useAuth } from "../contexts/AuthContext";
 import './Moderate.css';
 
-
 function Moderate() {
   const { ads } = useAds();
   const { keycloak, authtrue } = useAuth();

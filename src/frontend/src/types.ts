@@ -28,3 +28,11 @@ export interface FavoriteUser {
   userId: string;
   adId: string;
 }
+
+export interface Notification {
+  id: string;
+  username: string;
+  message: string;
+  createdAt: number;
+  read: boolean;
+}
