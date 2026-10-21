@@ -76,6 +76,15 @@ function AdMain() {
     navigate('/moderate'); 
   }
 
+  const handleMessage = () => {
+    if(!authtrue) navigate('/auth');
+    if (!ad) return;
+    const users = [user.username, ad.authorId].sort().join('_');
+    const chatId = `${ad.id}_${users}`;
+  
+    navigate(`/messenger?chatId=${chatId}`);
+  };
+
   if (!ad) {
     return (
         <div className='adMain-main-container'>
@@ -122,7 +131,7 @@ function AdMain() {
             {ad.status ==='ACTIVE' &&(
                 <div className='adMain-buttons'>
                     <button onClick={openPhone} type='button' className='adMain-button-phone'>Позвонить</button>
-                    {ad.authorId === user?.username && (<button type='button' className='adMain-button-message'>Написать</button>)}
+                    {ad.authorId !== user?.username && (<button type='button' className='adMain-button-message' onClick={handleMessage}>Написать</button>)}
                 </div>
             )}
 

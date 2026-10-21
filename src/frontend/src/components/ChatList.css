@@ -1,0 +1,42 @@
+.chatlist-main-container {
+    width: 350px;
+    border-right: 1px solid #e5eaee;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    height: 100%;
+}
+
+.chatlist-title {
+    padding: 20px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    border-bottom: 1px solid #e5eaee;
+}
+
+.chatlist-chat {
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatlist-chat::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chatlist-chat::-webkit-scrollbar-thumb {
+    background: #cdd6dd;
+    border-radius: 3px;
+}
+
+.chatlist-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: #6b7a90;
+    margin: 0;
+    font-size: 16px;
+}

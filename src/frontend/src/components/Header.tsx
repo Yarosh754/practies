@@ -41,7 +41,7 @@ function Header() {
                     </Link>
                 )}
                 {authtrue && <Link to='/myAds'>Мои объявления</Link>}
-                {authtrue && <Link to='/'>Сообщения</Link>}
+                {authtrue && <Link to='/messenger'>Сообщения</Link>}
                 <Link to='/'>Объявления</Link>
                 <div className='header-buttons'>
                     {authtrue && (

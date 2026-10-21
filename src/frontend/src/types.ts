@@ -36,3 +36,12 @@ export interface Notification {
   createdAt: number;
   read: boolean;
 }
+
+export interface ChatMessage {
+  id: string;
+  chatId: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+  isRead: boolean;
+}
