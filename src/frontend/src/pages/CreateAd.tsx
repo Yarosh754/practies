@@ -6,16 +6,19 @@ import { seedCategories, seedLocations } from '../storage/seedAd';
 import './CreateAd.css';
 import { toast } from 'sonner';
 import { useNotifications } from '../contexts/NotificationsContext';
+import { processImageFile } from '../utils/imageUtils';
 
 interface FormState {
   title: string;
-  image: string;
+  images: string[];
   description: string;
   price: string;
   categoryId: string;
   location: string;
   phone: string;
 }
+
+const DELETE_IMG = '/icons/delete-img.png';
 
 function CreateAd() {
   const { id } = useParams<{ id: string }>();
@@ -29,13 +32,15 @@ function CreateAd() {
 
   const [form, setForm] = useState<FormState>({
     title: '',
-    image: '',
+    images: [],
     description: '',
     price: '',
     categoryId: seedCategories[0].value,
     location: seedLocations[1].value,
     phone: '',
   });
+
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -45,7 +50,7 @@ function CreateAd() {
 
     setForm({
       title: ad.title,
-      image: ad.image,
+      images: ad.images || [],
       description: ad.description,
       price: String(ad.price),
       categoryId: ad.categoryId,
@@ -73,16 +78,48 @@ function CreateAd() {
     }
   }
 
-  const update = (key: keyof FormState, value: string) => {
+  const update = (key: keyof FormState, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    if (form.images.length + files.length > 15) {
+      toast.error('Максимум 15 фотографий');
+      return;
+    }
+
+    const newImages: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const base64 = await processImageFile(files[i]);
+      newImages.push(base64);
+    }
+
+    update('images', [...form.images, ...newImages]);
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = form.images.filter((_, i) => i !== index);
+    update('images', newImages);
+    if (previewIndex >= newImages.length) {
+      setPreviewIndex(Math.max(0, newImages.length - 1));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (form.images.length === 0) {
+      toast.error('Загрузите хотя бы одну фотографию');
+      return;
+    }
+
     const createad = {
       title: form.title.trim(),
-      image: form.image.trim(),
+      images: form.images,
       description: form.description.trim(),
       price: Number(form.price),
       categoryId: form.categoryId,
@@ -114,12 +151,36 @@ function CreateAd() {
       </div>
 
       <form className="createAd-form" onSubmit={handleSubmit}>
+        <div className="createAd-photos-block">
+          <p className="createAd-section-title">Фотографии</p>
+          {form.images.length > 0 && (
+            <div className="createAd-main-preview">
+              <img className="createAd-main-preview-img" src={form.images[previewIndex]} alt="" />
+            </div>
+          )}
+
+          <div className="createAd-mini-img">
+            {form.images.map((img, i) => (
+              <div key={i} className={`createAd-img ${previewIndex === i ? 'active' : ''}`} onClick={() => setPreviewIndex(i)}>
+                <img className='createAd-image' src={img} alt="" />
+                <button type="button" className="createAd-img-delete" onClick={(e) => { e.stopPropagation(); removeImage(i); }}>
+                  <img src={DELETE_IMG} alt="Удалить" className="delete-icon" />
+                </button>
+              </div>
+            ))}
+            
+            {form.images.length < 15 && (
+              <label className="createAd-upload-label">
+                <span className='createAd-img-span'>+</span>
+                <p className='p-createAd-img'>Добавить</p>
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: 'none' }} />
+              </label>
+            )}
+          </div>
+        </div>
+
         <label className="createAd-label">Название
           <input className="createAd-input" type="text" value={form.title} onChange={(e) => update('title', e.target.value)} required maxLength={30} />
-        </label>
-
-        <label className="createAd-label">Ссылка на фото
-          <input className="createAd-input" type="url" value={form.image} onChange={(e) => update('image', e.target.value)} />
         </label>
 
         <label className="createAd-label">Описание

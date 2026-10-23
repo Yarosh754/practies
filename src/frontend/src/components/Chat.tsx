@@ -11,7 +11,7 @@ function Chat({ chat, isActive, onClick }: ChatProps) {
   return (
     <div className={`chat-list-item ${isActive ? 'active' : ''}`} onClick={onClick}>
       <div className="chat-image-container">
-        <img src={chat.ad.image} className="chat-img" alt="" />
+        <img src={chat.ad.images?.[0] || ''} className="chat-img" alt="" />
       </div>
       <div className="chat-info-container">
         <div className="chat-info-top">

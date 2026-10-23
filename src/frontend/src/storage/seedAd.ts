@@ -37,7 +37,7 @@ export const seedAds: Ad[] = [
   {
     id: '1',
     title: 'iPhone 13 Pro 256GB',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQymTFoiZgtPJI3LCAlJK2rtnOEdXD3_JRUKpmpDbIW-A&s=10',
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQymTFoiZgtPJI3LCAlJK2rtnOEdXD3_JRUKpmpDbIW-A&s=10'],
     description: 'Отличное состояние, батарея 89%. Полный комплект.',
     price: 750,
     categoryId: 'electronics',
@@ -50,7 +50,7 @@ export const seedAds: Ad[] = [
   {
     id: '2',
     title: 'Куртка зимняя мужская',
-    image: 'https://wantedshop.ru/upload/resize_cache/iblock/a0b/400_600_1/ft61n4fdp5945usv33q0mwzngw19j9j8.jpg',
+    images: ['https://wantedshop.ru/upload/resize_cache/iblock/a0b/400_600_1/ft61n4fdp5945usv33q0mwzngw19j9j8.jpg'],
     description: 'Размер L, носилась один сезон. Без дефектов.',
     price: 240,
     categoryId: 'clothes',
@@ -63,7 +63,7 @@ export const seedAds: Ad[] = [
   {
     id: '3',
     title: 'Велосипед горный',
-    image: 'https://basket-12.wbbasket.ru/vol1657/part165727/165727289/images/c246x328/1.webp',
+    images: ['https://basket-12.wbbasket.ru/vol1657/part165727/165727289/images/c246x328/1.webp'],
     description: '21 скорость, дисковые тормоза. Пробег небольшой.',
     price: 340,
     categoryId: 'sport',
@@ -76,7 +76,7 @@ export const seedAds: Ad[] = [
   {
     id: '4',
     title: 'Квартира 2х комнатная',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBHs4z5yzjBLQXs1jUXnrFMDrvp65ttiarFKfqHEMNjE41kvWeW9G29r-i&s=10',
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBHs4z5yzjBLQXs1jUXnrFMDrvp65ttiarFKfqHEMNjE41kvWeW9G29r-i&s=10'],
     description: 'Все вопросы по телефону',
     price: 400,
     categoryId: 'home',
@@ -89,7 +89,7 @@ export const seedAds: Ad[] = [
   {
     id: '5',
     title: 'Volkswagen Passat B7',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQO1GQ6Lu1aBKGQbLfZYXzERA9o1kn0zdAfXua1BWrlyw&s',
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQO1GQ6Lu1aBKGQbLfZYXzERA9o1kn0zdAfXua1BWrlyw&s'],
     description: '2013 год, дизель, 180 000 км. Обслужен, без вложений.',
     price: 8500,
     categoryId: 'auto',
@@ -102,7 +102,7 @@ export const seedAds: Ad[] = [
   {
     id: '6',
     title: 'MacBook Air M2',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPWwCuPtBVYf3-ZQL2XTH_CJ6--IoQKNqzwp6nNrrPC3KdGNXAT5_sfXI&s=10',
+    images: ['https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPWwCuPtBVYf3-ZQL2XTH_CJ6--IoQKNqzwp6nNrrPC3KdGNXAT5_sfXI&s=10'],
     description: '8/256 GB, куплен в 2024, состояние идеальное, чек есть.',
     price: 1100,
     categoryId: 'electronics',

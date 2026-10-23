@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './AdMain.css';
 import Favorites from '../components/Favorites';
 import { useAds } from '../contexts/AdContext';
@@ -20,28 +20,24 @@ function AdMain() {
   const navigate = useNavigate();
   const isAdmin = keycloak?.realmAccess?.roles.includes('admin');
 
+  useEffect(() => {
+    setIndexPhoto(0);
+  }, [id]);
+
   const ad = ads.find((i) => i.id === id);
   const { addNotification } = useNotifications();
 
-  const arrayPhoto = [ad?.image];
+  const arrayPhoto = ad?.images || []; 
   
-  const changePhotoLeft = () =>{
-    if(indexPhoto===0){
-        setIndexPhoto(3)
-    }
-    else {
-        setIndexPhoto(indexPhoto-1)
-    }
-  }
-  
-  const changePhotoRight = () =>{
-    if(indexPhoto===arrayPhoto.length-1){
-        setIndexPhoto(0)
-    }
-    else {
-        setIndexPhoto(indexPhoto+1)
-    }
-  }
+  const changePhotoLeft = () => {
+    if (arrayPhoto.length <= 1) return;
+    setIndexPhoto((prev) => (prev === 0 ? arrayPhoto.length - 1 : prev - 1));
+  };
+
+  const changePhotoRight = () => {
+    if (arrayPhoto.length <= 1) return;
+    setIndexPhoto((prev) => (prev === arrayPhoto.length - 1 ? 0 : prev + 1));
+  };
 
   const openPhone = () =>{
     if(!authtrue) navigate('/auth');
@@ -99,24 +95,24 @@ function AdMain() {
             <div className='adMain-heart'>
                 <Favorites adId={ad.id}/>
             </div>
-            <button className='adMain-button-left' onClick={changePhotoLeft}>
-                <img src={BUTTON_LEFT} alt=""  className="adMain-button-left-img"/>
-            </button>
-            <img 
-              src={arrayPhoto[indexPhoto]} 
-              className="adMain-img"
-              alt=""
-            />
-            <button className='adMain-button-right' onClick={changePhotoRight}>
-                <img src={BUTTON_RIGHT} alt=""  className="adMain-button-right-img"/>
-            </button>
+            {arrayPhoto.length > 1 &&
+                <button className='adMain-button-left' onClick={changePhotoLeft}>
+                    <img src={BUTTON_LEFT} alt=""  className="adMain-button-left-img"/>
+                </button>
+            }
+            <img src={arrayPhoto[indexPhoto] || ''} className="adMain-img" alt="" />
+            {arrayPhoto.length > 1 &&
+                <button className='adMain-button-right' onClick={changePhotoRight}>
+                    <img src={BUTTON_RIGHT} alt=""  className="adMain-button-right-img"/>
+                </button>
+            }
         </div>
         <div className='adMain-info-container'>
             <div className='adMain-name'>
                 <p className='p-adMain-name'>{ad.title}</p>
             </div>
             <div className='adMain-price'>
-                <p className='p-adMain-price'>{ad.price}</p>
+                <p className='p-adMain-price'>{ad.price}$</p>
             </div>
             <div className='adMain-location'>
                 <p className='p-adMain-location'>{seedLocations.find((l) => l.value === ad.location)?.label ?? ad.location}</p>

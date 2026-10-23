@@ -1,0 +1,573 @@
+openapi: 3.0.3
+info:
+  title: Kufar Clone
+  version: 1.0.0
+  description:
+    Просмотр активных объявлений (`ACTIVE`) любой, без токена
+    Создание, редактирование, удаление объявления любой авторизованный пользователь
+    Смена статуса (`SOLD`, `DELETE`) только автор объявления
+    Модерация (`ACTIVE`, `REJECTED`) только администратор
+    Просмотр и отправка сообщений в чат участники чата (автор объявления и покупатель)
+    Добавление в избранное, просмотр уведомлений любой авторизованный пользователь
+
+    - `MODERATION` — на модерации (видно только автору и админу).
+    - `ACTIVE` — активно (видно всем).
+    - `SOLD` — продано.
+    - `DELETE` — мягкое удаление.
+    - `REJECTED` — отклонено модератором.
+    Все ошибки возвращаются в виде `ApiError`.
+
+servers:
+  - url: http://localhost:9100
+    description: Backend в Docker Compose
+
+tags:
+  - name: Ads
+    description: Управление объявлениями
+  - name: Moderation
+    description: Модерация объявлений (только admin)
+  - name: Chat
+    description: Сообщения и чаты
+  - name: Favorites
+    description: Избранные объявления
+  - name: Notifications
+    description: Уведомления пользователя
+  - name: Dictionaries
+    description: Справочники (категории и города)
+
+paths:
+  /ads:
+    get:
+      tags: [Ads]
+      operationId: listAds
+      summary: Получить список объявлений
+      description: |
+        Возвращает список активных объявлений.
+        По умолчанию отдаются только `ACTIVE`. 
+        Если передан параметр `authorId`, возвращает объявления конкретного пользователя (включая `MODERATION`, `SOLD` и т.д.).
+      security:
+        - {}
+        - keycloak: []
+      parameters:
+        - name: categoryId
+          in: query
+          description: Фильтр по ID категории
+          schema: { type: string }
+        - name: location
+          in: query
+          description: Фильтр по городу
+          schema: { type: string }
+        - name: authorId
+          in: query
+          description: Фильтр по имени пользователя (для "Моих объявлений")
+          schema: { type: string }
+        - name: sort
+          in: query
+          description: Сортировка
+          schema:
+            type: string
+            enum: [date-desc, date-asc, price-asc, price-desc]
+            default: date-desc
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ad'
+
+    post:
+      tags: [Ads]
+      operationId: createAd
+      summary: Создать объявление
+      description: |
+        Создаёт объявление со статусом `MODERATION`.
+        `authorId` берётся из токена. `createdAt` ставится сервером.
+        Изображения передаются массивом строк (Base64 или URL).
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /ads/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AdId'
+    get:
+      tags: [Ads]
+      operationId: getAd
+      summary: Получить объявление по ID
+      description: Объявления в статусе `MODERATION` доступны только автору и админу.
+      security:
+        - {}
+        - keycloak: []
+      responses:
+        '200':
+          description: Объявление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Ads]
+      operationId: updateAd
+      summary: Обновить объявление
+      description: Только автор. После обновления статус сбрасывается в `MODERATION`.
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdRequest'
+      responses:
+        '200':
+          description: Обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ads/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/AdId'
+    patch:
+      tags: [Ads]
+      operationId: updateAdStatus
+      summary: Сменить статус объявления
+      description: Автор может ставить `SOLD` или `DELETE`. Админ может ставить любые статусы.
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/AdStatus'
+      responses:
+        '200':
+          description: Статус изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /ads/{id}/moderate:
+    parameters:
+      - $ref: '#/components/parameters/AdId'
+    post:
+      tags: [Moderation]
+      operationId: moderateAd
+      summary: Модерация объявления
+      description: Только для администратора. Принимает `approve` (статус `ACTIVE`) или `reject` (статус `REJECTED`).
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approve, reject]
+      responses:
+        '200':
+          description: Объявление одобрено или отклонено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /chats:
+    get:
+      tags: [Chat]
+      operationId: listChats
+      summary: Список чатов пользователя
+      description: Возвращает список чатов, где текущий пользователь является покупателем или продавцом.
+      security:
+        - keycloak: []
+      responses:
+        '200':
+          description: Список чатов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatListItem'
+
+  /chats/{chatId}/messages:
+    parameters:
+      - name: chatId
+        in: path
+        required: true
+        description: Формат ID — adId_user1_user2
+        schema: { type: string, example: "123_admin_user1" }
+    get:
+      tags: [Chat]
+      operationId: getChatMessages
+      summary: Получить сообщения чата
+      description: Возвращает историю сообщений. Также помечает их как прочитанные для текущего пользователя.
+      security:
+        - keycloak: []
+      responses:
+        '200':
+          description: Список сообщений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatMessage'
+    post:
+      tags: [Chat]
+      operationId: sendMessage
+      summary: Отправить сообщение
+      description: Отправка сообщения в чат.
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  maxLength: 2000
+      responses:
+        '201':
+          description: Сообщение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      operationId: listFavorites
+      summary: Получить список ID избранных объявлений
+      security:
+        - keycloak: []
+      responses:
+        '200':
+          description: Массив ID объявлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+    post:
+      tags: [Favorites]
+      operationId: addFavorite
+      summary: Добавить объявление в избранное
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [adId]
+              properties:
+                adId: { type: string }
+      responses:
+        '200': { description: Добавлено }
+
+  /favorites/{adId}:
+    parameters:
+      - name: adId
+        in: path
+        required: true
+        schema: { type: string }
+    delete:
+      tags: [Favorites]
+      operationId: removeFavorite
+      summary: Удалить объявление из избранного
+      security:
+        - keycloak: []
+      responses:
+        '204': { description: Удалено }
+
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: Получить уведомления пользователя
+      security:
+        - keycloak: []
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+    delete:
+      tags: [Notifications]
+      operationId: clearNotifications
+      summary: Очистить все уведомления
+      security:
+        - keycloak: []
+      responses:
+        '204': { description: Очищено }
+
+  /notifications/read:
+    patch:
+      tags: [Notifications]
+      operationId: markAllAsRead
+      summary: Отметить все уведомления как прочитанные
+      security:
+        - keycloak: []
+      responses:
+        '200': { description: Успешно }
+
+  /dictionaries:
+    get:
+      tags: [Dictionaries]
+      operationId: getDictionaries
+      summary: Получить справочники (категории и города)
+      description: Используется для выпадающих списков на фронтенде.
+      responses:
+        '200':
+          description: Справочники
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Option'
+                  locations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Option'
+
+components:
+  securitySchemes:
+    keycloak:
+      type: oauth2
+      description:
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:9200/realms/practics/protocol/openid-connect/auth
+          tokenUrl: http://localhost:9200/realms/practics/protocol/openid-connect/token
+          scopes:
+            openid: Базовый scope OpenID Connect
+
+  parameters:
+    AdId:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор объявления
+      schema:
+        type: string
+        example: '1729582345678'
+
+  schemas:
+    AdStatus:
+      type: string
+      enum: [MODERATION, ACTIVE, SOLD, DELETE, REJECTED]
+
+    Option:
+      type: object
+      properties:
+        value: { type: string }
+        label: { type: string }
+
+    Ad:
+      type: object
+      required: [id, title, description, price, categoryId, status, location, authorId, phone, createdAt, images]
+      properties:
+        id:
+          type: string
+          example: '1'
+        title:
+          type: string
+          example: 'iPhone 13 Pro 256GB'
+        description:
+          type: string
+        price:
+          type: number
+          example: 750
+        categoryId:
+          type: string
+          example: 'electronics'
+        location:
+          type: string
+          example: 'minsk'
+        status:
+          $ref: '#/components/schemas/AdStatus'
+        images:
+          type: array
+          items:
+            type: string
+          description: Массив строк (Base64 или URL). Первый элемент — главное фото.
+        authorId:
+          type: string
+          description: username автора (совпадает с preferred_username в Keycloak)
+        phone:
+          type: string
+          example: '+375291234567'
+        createdAt:
+          type: string
+          example: '22 окт., 18:58'
+
+    CreateAdRequest:
+      type: object
+      required: [title, description, price, categoryId, location, phone, images]
+      properties:
+        title:
+          type: string
+          maxLength: 30
+        description:
+          type: string
+          maxLength: 1000
+        price:
+          type: number
+          minimum: 0
+        categoryId:
+          type: string
+        location:
+          type: string
+        phone:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 15
+
+    ChatMessage:
+      type: object
+      required: [id, chatId, senderId, text, createdAt, isRead]
+      properties:
+        id:
+          type: string
+          example: '1729582345679'
+        chatId:
+          type: string
+          example: '1_admin_user'
+        senderId:
+          type: string
+          description: username отправителя
+          example: 'user'
+        text:
+          type: string
+        createdAt:
+          type: string
+          example: '22 окт., 18:59'
+        isRead:
+          type: boolean
+
+    ChatListItem:
+      type: object
+      properties:
+        chatId: { type: string }
+        otherUser: 
+          type: string
+          description: username собеседника
+        ad:
+          $ref: '#/components/schemas/Ad'
+        lastMessage:
+          $ref: '#/components/schemas/ChatMessage'
+        unreadCount:
+          type: integer
+
+    Notification:
+      type: object
+      properties:
+        id: { type: string }
+        message: { type: string }
+        createdAt: 
+          type: integer
+          description: Unix timestamp
+        read: { type: boolean }
+
+    ApiError:
+      type: object
+      required: [statusCode, message]
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        error:
+          type: string
+          example: 'Bad Request'
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Нет токена или он недействителен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Forbidden:
+      description: Недостаточно прав
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'

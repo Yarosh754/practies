@@ -93,7 +93,7 @@ function Home() {
         <div className="home-ads-container">
           {visibleAds.map((ad) => (
             <Link key={ad.id} to={`/adMain/${ad.id}`} className="ad-link">
-              <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.image} location={seedLocations.find((i) => i.value===ad.location)?.label ?? ad.location} date={ad.createdAt} />
+              <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.images?.[0] || ''} location={seedLocations.find((i) => i.value===ad.location)?.label ?? ad.location} date={ad.createdAt} />
             </Link>
           ))}
         </div>

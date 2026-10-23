@@ -132,3 +132,122 @@
     background: #09a866;
     transform: scale(0.95);
 }
+
+.createAd-photos-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5eaee;
+}
+.createAd-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #353c5f;
+    margin: 0;
+}
+
+.createAd-main-preview {
+    width: 100%;
+    height: 320px;
+    background: #f7f9fa;
+    border: 2px solid #e5eaee;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.createAd-main-preview-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.createAd-mini-img {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.createAd-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    border: 2px solid #e5eaee;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    background: #f7f9fa;
+    transition: border-color 0.15s ease;
+}
+.createAd-img:hover {
+    border-color: #0abb72;
+}
+.createAd-img.active {
+    border-color: #0abb72;
+}
+
+.createAd-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.createAd-img-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border: 2px solid #e5eaee;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    z-index: 10;
+}
+.createAd-img-delete:hover {
+    border-color: #e24444;
+    transform: scale(1.1);
+    background: #e24444;
+}
+.delete-icon {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.createAd-upload-label {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #e5eaee;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6b7a90;
+    background: #f7f9fa;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+.createAd-upload-label:hover {
+    border-color: #0abb72;
+    color: #0abb72;
+}
+.createAd-img-span {
+    font-size: 25px;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.p-createAd-img {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+}

@@ -13,7 +13,7 @@ export interface Option {
 export interface Ad {
   id: string;
   title: string;
-  image: string;
+  images: string[];
   description: string;
   price: number;
   categoryId: string;
