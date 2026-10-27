@@ -35,6 +35,7 @@ export interface Notification {
   message: string;
   createdAt: number;
   read: boolean;
+  link?: string;
 }
 
 export interface ChatMessage {

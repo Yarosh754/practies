@@ -6,7 +6,7 @@ import type { Notification } from '../types';
 interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (targetUsername: string, message: string) => void;
+  addNotification: (targetUsername: string, message: string, link?: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
 }
@@ -40,13 +40,14 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const addNotification = useCallback((targetUsername: string, message: string) => {
+  const addNotification = useCallback((targetUsername: string, message: string, link?: string) => {
     const newNotification: Notification = {
       id: String(Date.now() + Math.random()),
       username: targetUsername,
       message,
       createdAt: Date.now(),
       read: false,
+      link,
     };
     setAllNotifications((prev) => [...prev, newNotification]);
   }, []);

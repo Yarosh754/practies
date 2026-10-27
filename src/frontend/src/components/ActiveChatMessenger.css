@@ -20,12 +20,6 @@
     color: #353c5f;
 }
 
-.activechat-header-ad {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: #0abb72;
-}
-
 .activechat-messages {
     flex: 1;
     padding: 24px;
@@ -103,4 +97,17 @@
     object-fit: contain;
     -webkit-user-drag: none;
     pointer-events: none;
+}
+
+.activechat-header-ad {
+    display: inline-block;
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #0abb72;
+    text-decoration: none;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+.activechat-header-ad:hover {
+    color: #09a866;
+    text-decoration: underline;
 }

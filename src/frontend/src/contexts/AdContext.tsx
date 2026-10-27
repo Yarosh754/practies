@@ -5,7 +5,7 @@ import { seedAds } from '../storage/seedAd';
 
 interface AdContextType {
   ads: Ad[];
-  addAd: (ad: Omit<Ad, 'id' | 'createdAt'>) => void;
+  addAd: (ad: Omit<Ad, 'id' | 'createdAt'>) => Ad; 
   updateAd: (id: string, patch: Partial<Ad>) => void; 
   changeStatus: (id: string, status: Ad['status']) => void;
   removeAd: (id: string) => void;
@@ -13,7 +13,7 @@ interface AdContextType {
 
 const AdContext = createContext<AdContextType>({
   ads: [],
-  addAd: () => {},
+  addAd: () => ({} as Ad), 
   updateAd: () => {},
   changeStatus: () => {},
   removeAd: () => {},
@@ -34,11 +34,11 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     const ad: Ad = {
       ...newAd,
       id: String(Date.now()),
-      createdAt: new Date().toLocaleString('ru-RU', {
-        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-      }),
+      createdAt: new Date().toISOString(),
     };
     setAds((prev) => [ad, ...prev]);
+    
+    return ad; 
   };
 
   const changeStatus: AdContextType['changeStatus'] = (id, status) => {

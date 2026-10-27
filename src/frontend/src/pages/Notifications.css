@@ -66,3 +66,15 @@
     font-size: 14px;
     color: #6b7a90;
 }
+
+.notifications-message-link {
+    text-decoration: none;
+    color: #353c5f;
+    display: block;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+.notifications-message-link:hover .notifications-message {
+    text-decoration: underline;
+    color: #0abb72;
+
+}

@@ -1,5 +1,7 @@
 import './AdComponent.css'
 import Favorites from './Favorites';
+import { formatDate } from '../utils/dateUtils';
+import ImageComponent from './ImageComponent';
 
 interface AdComponent{
   adId: string;
@@ -18,7 +20,7 @@ function AdComponent({adId,title,price,image,location,date,}: AdComponent){
             <div className='adComponent-heart'>
                 <Favorites adId={adId} />
             </div>
-            <img src={image} className="adComponent-img" alt="" />
+            <ImageComponent src={image} className="adComponent-img" />
         </div>
         <div className='adComponent-info'>
             <div className='adComponent-price'>
@@ -31,7 +33,7 @@ function AdComponent({adId,title,price,image,location,date,}: AdComponent){
                 <p className='p-adComponent-location'>{location}</p>
             </div>
             <div className='adComponent-date'>
-                <p className='p-adComponent-date'>{date}</p>
+                <p className='p-adComponent-date'>{formatDate(date)}</p>
             </div>
             <div>
                 <button type='button' className='adComponent-button'>Перейти</button>

@@ -1,3 +1,5 @@
+import { saveImageToStorage } from '../storage/imageStorage';
+
 export const processImageFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -22,7 +24,9 @@ export const processImageFile = (file: File): Promise<string> => {
         ctx?.drawImage(img, 0, 0, width, height);
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        resolve(dataUrl);
+        
+        const imageId = saveImageToStorage(dataUrl); 
+        resolve(imageId);
       };
     };
     reader.onerror = (error) => reject(error);

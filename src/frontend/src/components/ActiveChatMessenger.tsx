@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import type { Ad, ChatMessage } from '../types';
 import Message from './Message';
 import './ActiveChatMessenger.css';
@@ -31,7 +32,9 @@ function ActiveChatMessenger({ ad, otherUser, messages, onSendMessage }: ActiveC
     <div className="activechat-main-container">
       <div className="activechat-header">
         <p className="activechat-header-name">{otherUser}</p>
-        <p className="activechat-header-ad">{ad.title}</p>
+        <Link to={`/adMain/${ad.id}`} className="activechat-header-ad">
+          {ad.title}
+        </Link>
       </div>
 
       <div className="activechat-messages">

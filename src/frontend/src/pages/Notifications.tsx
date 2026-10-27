@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNotifications } from '../contexts/NotificationsContext';
 import './Notifications.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 function Notifications() {
   const { notifications, markAllAsRead, clearAll } = useNotifications();
@@ -31,7 +31,13 @@ function Notifications() {
         <div className="notifications-list">
           {notifications.map((n) => (
             <div key={n.id} className="notifications-item">
-              <p className="notifications-message">{n.message}</p>
+              {n.link ? (
+                <Link to={n.link} className="notifications-message-link">
+                  <p className="notifications-message">{n.message}</p>
+                </Link>
+              ) : (
+                <p className="notifications-message">{n.message}</p>
+              )}
               <span className="notifications-date">
                 {new Date(n.createdAt).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
               </span>

@@ -34,6 +34,8 @@ function Home() {
     setFilters({category: '', location: '', sort: 'date-desc', favoritesOnly: false})
   };
 
+    const isFiltersDefault = filters.category === '' && filters.location === '' && filters.sort === 'date-desc' && filters.favoritesOnly === false;
+
   let visibleAds = ads.filter((ad) => {
     if (ad.status !== 'ACTIVE') return false;
     if (filters.category && ad.categoryId !== filters.category) return false;
@@ -43,12 +45,15 @@ function Home() {
   });
 
   visibleAds = [...visibleAds].sort((a, b) => {
+    const timeA = new Date(a.createdAt).getTime();
+    const timeB = new Date(b.createdAt).getTime();
+
     switch (filters.sort) {
       case 'price-asc': return a.price - b.price;
       case 'price-desc': return b.price - a.price;
-      case 'date-asc': return a.id.localeCompare(b.id);
+      case 'date-asc': return timeA - timeB; 
       case 'date-desc':
-      default: return b.id.localeCompare(a.id);
+      default: return timeB - timeA; 
     }
   });
 
@@ -82,9 +87,11 @@ function Home() {
             Избранное {favorites.length > 0 && `(${favorites.length})`}
           </button>
         )}
-        <button type="button" className='home-clear-button' onClick={handleClearFilters}>
-          Очистить фильтры
-        </button>
+        {!isFiltersDefault && (
+          <button type="button" className='home-clear-button' onClick={handleClearFilters}>
+            Очистить фильтры
+          </button>
+        )}
       </div>
 
       {visibleAds.length === 0 ? (

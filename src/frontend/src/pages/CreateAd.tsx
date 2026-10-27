@@ -7,6 +7,8 @@ import './CreateAd.css';
 import { toast } from 'sonner';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { processImageFile } from '../utils/imageUtils';
+import type { Ad } from '../types';
+import ImageComponent from '../components/ImageComponent';
 
 interface FormState {
   title: string;
@@ -129,15 +131,18 @@ function CreateAd() {
       authorId: user.username,
     };
 
+    let createdAd: Ad; 
+
     if (isEdit && id) {
       updateAd(id, createad);
+      createdAd = { ...createad, id, createdAt: '...' }; 
     } else {
-      addAd(createad);
+      createdAd = addAd(createad);
     }
 
-    const message = isEdit ? 'Объявление отредактировано и отправлено на модерацию' : 'Объявление создано и отправлено на модерацию';
+    const message = isEdit ? `Объявление "${form.title}" отредактировано и отправлено на модерацию` : `Объявление "${form.title}" создано и отправлено на модерацию`;
     toast.success(message);
-    addNotification(user.username, message);
+    addNotification(user.username, message, `/adMain/${createdAd.id}`);
 
     navigate('/myAds');
   };
@@ -155,14 +160,14 @@ function CreateAd() {
           <p className="createAd-section-title">Фотографии</p>
           {form.images.length > 0 && (
             <div className="createAd-main-preview">
-              <img className="createAd-main-preview-img" src={form.images[previewIndex]} alt="" />
+              <ImageComponent className="createAd-main-preview-img" src={form.images[previewIndex]} />
             </div>
           )}
 
           <div className="createAd-mini-img">
             {form.images.map((img, i) => (
               <div key={i} className={`createAd-img ${previewIndex === i ? 'active' : ''}`} onClick={() => setPreviewIndex(i)}>
-                <img className='createAd-image' src={img} alt="" />
+                <ImageComponent className="createAd-image" src={img} />
                 <button type="button" className="createAd-img-delete" onClick={(e) => { e.stopPropagation(); removeImage(i); }}>
                   <img src={DELETE_IMG} alt="Удалить" className="delete-icon" />
                 </button>

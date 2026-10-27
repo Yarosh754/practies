@@ -45,7 +45,7 @@ export const seedAds: Ad[] = [
     location: 'minsk',
     authorId: 'user',
     phone: '+375 (29) 394-93-32',
-    createdAt: '1 окт., 11:41',
+    createdAt: '2026-10-01T11:41:00.000Z',
   },
   {
     id: '2',
@@ -58,7 +58,7 @@ export const seedAds: Ad[] = [
     location: 'mogilev',
     authorId: 'user1',
     phone: '+375 (29) 333-93-32',
-    createdAt: '3 окт., 15:20',
+    createdAt: '2026-10-03T15:20:00.000Z',
   },
   {
     id: '3',
@@ -71,7 +71,7 @@ export const seedAds: Ad[] = [
     location: 'gomel',
     authorId: 'user1',
     phone: '+375 (29) 333-93-32',
-    createdAt: '28 сент., 09:15',
+    createdAt: '2026-09-28T09:15:00.000Z',
   },
   {
     id: '4',
@@ -84,7 +84,7 @@ export const seedAds: Ad[] = [
     location: 'vitebsk',
     authorId: 'user',
     phone: '+375 (29) 394-93-32',
-    createdAt: '5 окт., 18:00',
+    createdAt: '2026-10-05T18:00:00.000Z',
   },
   {
     id: '5',
@@ -97,7 +97,7 @@ export const seedAds: Ad[] = [
     location: 'minsk',
     authorId: 'user',
     phone: '+375 (29) 394-93-32',
-    createdAt: '7 окт., 10:30',
+    createdAt: '2026-10-07T10:30:00.000Z',
   },
   {
     id: '6',
@@ -110,6 +110,6 @@ export const seedAds: Ad[] = [
     location: 'brest',
     authorId: 'user1',
     phone: '+375 (29) 333-93-32',
-    createdAt: '8 окт., 14:05',
+    createdAt: '2026-10-08T14:05:00.000Z',
   },
 ];

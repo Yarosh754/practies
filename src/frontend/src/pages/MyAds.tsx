@@ -28,13 +28,15 @@ function MyAds() {
     setFilters({status: 'ACTIVE', sort: 'date-desc'})
   };
 
+  const isFiltersDefault = filters.status === 'ACTIVE' && filters.sort === 'date-desc';
+
   let visibleAds = ads.filter((ad) => {
     if (ad.authorId !== user.username) return false;
     if (filters.status && ad.status !== filters.status) return false;
     return true;
   });
 
-  visibleAds = [...visibleAds].sort((a, b) => {return b.id.localeCompare(a.id);});
+  visibleAds = [...visibleAds].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
       <div className="myAds-main-container">
@@ -48,10 +50,11 @@ function MyAds() {
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
-
-          <button type="button" className="myAds-clear-button" onClick={handleClearFilters}>
-            Очистить фильтры
-          </button>
+          {!isFiltersDefault && (
+            <button type="button" className="myAds-clear-button" onClick={handleClearFilters}>
+              Очистить фильтры
+            </button>
+          )}
         </div>
 
         {visibleAds.length === 0 ? (

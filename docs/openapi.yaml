@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Kufar Clone
   version: 1.0.0
-  description:
+  description: |
     Просмотр активных объявлений (`ACTIVE`) любой, без токена
     Создание, редактирование, удаление объявления любой авторизованный пользователь
     Смена статуса (`SOLD`, `DELETE`) только автор объявления
@@ -34,6 +34,8 @@ tags:
     description: Уведомления пользователя
   - name: Dictionaries
     description: Справочники (категории и города)
+  - name: Images
+    description: Работа с изображениями (отдача файлов)
 
 paths:
   /ads:
@@ -85,7 +87,7 @@ paths:
       description: |
         Создаёт объявление со статусом `MODERATION`.
         `authorId` берётся из токена. `createdAt` ставится сервером.
-        Изображения передаются массивом строк (Base64 или URL).
+        Изображения передаются массивом строк (идентификаторов изображений).
       security:
         - keycloak: []
       requestBody:
@@ -126,7 +128,7 @@ paths:
                 $ref: '#/components/schemas/Ad'
         '404':
           $ref: '#/components/responses/NotFound'
-    patch:
+    put:
       tags: [Ads]
       operationId: updateAd
       summary: Обновить объявление
@@ -328,7 +330,6 @@ paths:
       responses:
         '204': { description: Удалено }
 
-
   /notifications:
     get:
       tags: [Notifications]
@@ -387,11 +388,45 @@ paths:
                     items:
                       $ref: '#/components/schemas/Option'
 
+  /images/{id}:
+    get:
+      tags: [Images]
+      operationId: getImage
+      summary: Получить изображение по ID
+      description: |
+        Возвращает бинарный файл изображения по его идентификатору.
+        Сервер должен вернуть правильный заголовок Content-Type (например, image/jpeg).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор изображения
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Файл изображения
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     keycloak:
       type: oauth2
-      description:
+      description: Авторизация через Keycloak
       flows:
         authorizationCode:
           authorizationUrl: http://localhost:9200/realms/practics/protocol/openid-connect/auth
@@ -447,7 +482,8 @@ components:
           type: array
           items:
             type: string
-          description: Массив строк (Base64 или URL). Первый элемент — главное фото.
+            format: uuid
+          description: Массив идентификаторов изображений (ID). Первый элемент — главное фото.
         authorId:
           type: string
           description: username автора (совпадает с preferred_username в Keycloak)
@@ -456,7 +492,9 @@ components:
           example: '+375291234567'
         createdAt:
           type: string
-          example: '22 окт., 18:58'
+          format: date-time
+          description: Дата и время создания в формате ISO 8601 (UTC)
+          example: '2024-10-22T18:58:00.000Z'
 
     CreateAdRequest:
       type: object
@@ -481,6 +519,8 @@ components:
           type: array
           items:
             type: string
+            format: uuid
+          description: Массив идентификаторов уже загруженных изображений
           minItems: 1
           maxItems: 15
 
@@ -502,7 +542,9 @@ components:
           type: string
         createdAt:
           type: string
-          example: '22 окт., 18:59'
+          format: date-time
+          description: Дата и время отправки в формате ISO 8601 (UTC)
+          example: '2024-10-22T18:59:00.000Z'
         isRead:
           type: boolean
 
@@ -526,8 +568,10 @@ components:
         id: { type: string }
         message: { type: string }
         createdAt: 
-          type: integer
-          description: Unix timestamp
+          type: string
+          format: date-time
+          description: Дата и время создания в формате ISO 8601 (UTC)
+          example: '2024-10-22T18:59:00.000Z'
         read: { type: boolean }
 
     ApiError:

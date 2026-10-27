@@ -103,32 +103,20 @@ header {
     border-bottom-color: #0abb72;
 }
 
-.header-account-img {
-    width: 25px;
-    height: 25px;
-    object-fit: contain;
-    pointer-events: none;
-    user-select: none;
-}
-.header-user {
-    font-size: 15px;
-    font-weight: 500;
-    color: #353c5f;
-}
-
 .header-buttons {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-left: 8px;
 }
+
 .header-createAd-button {
     background: #0abb72;
     border: 1px solid #0abb72;
     border-radius: 8px;
     padding: 0;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 .header-createAd-button a {
     display: block;
@@ -148,8 +136,49 @@ header {
     transform: scale(0.95);
 }
 
-.header-login-button,
-.header-logout-button {
+.header-account-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: #f7f9fa;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.header-account-link:hover {
+    background-color: #0abb72;
+    border-color: #0abb72;
+    transform: scale(1.05);
+}
+.header-user {
+    font-size: 15px;
+    font-weight: 500;
+    color: #353c5f;
+    transition: color 0.15s ease;
+}
+.header-account-link:hover .header-user {
+    color: #ffffff;
+}
+.header-account-img {
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.15s ease;
+}
+.header-account-link:active {
+    background-color: #09a866;
+    border-color: #09a866;
+    transform: scale(0.95);
+}
+.header-account-link:active .header-user {
+    color: #ffffff;
+}
+
+.header-login-button {
     padding: 10px 18px;
     border-radius: 8px;
     font-size: 15px;
@@ -157,8 +186,6 @@ header {
     cursor: pointer;
     white-space: nowrap;
     transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-.header-login-button {
     background: #ffffff;
     color: #353c5f;
     border: 1px solid #cdd6dd;
@@ -168,17 +195,26 @@ header {
     color: #0abb72;
     transform: scale(1.05);
 }
-.header-logout-button {
-    background: #ffffff;
-    color: #353c5f;
-    border: 1px solid #cdd6dd;
-}
-.header-logout-button:hover {
-    border-color: #e24444;
-    color: #e24444;
-    transform: scale(1.05);
-}
-.header-login-button:active,
-.header-logout-button:active {
+.header-login-button:active {
     transform: scale(0.95);
+}
+
+.header-message-link {
+    position: relative;
+}
+.header-message-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background-color: #e24444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
 }
