@@ -1,8 +1,7 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: Kufar Clone
-  version: 1.0.0
-  description: |
+  description: |-
     Просмотр активных объявлений (`ACTIVE`) любой, без токена
     Создание, редактирование, удаление объявления любой авторизованный пользователь
     Смена статуса (`SOLD`, `DELETE`) только автор объявления
@@ -16,11 +15,8 @@ info:
     - `DELETE` — мягкое удаление.
     - `REJECTED` — отклонено модератором.
     Все ошибки возвращаются в виде `ApiError`.
-
-servers:
-  - url: http://localhost:9100
-    description: Backend в Docker Compose
-
+  version: 1.0.0
+  contact: {}
 tags:
   - name: Ads
     description: Управление объявлениями
@@ -36,60 +32,76 @@ tags:
     description: Справочники (категории и города)
   - name: Images
     description: Работа с изображениями (отдача файлов)
-
+servers:
+  - url: http://localhost:9100
+    description: Backend в Docker Compose
 paths:
   /ads:
     get:
-      tags: [Ads]
+      description: Возвращает список активных объявлений. По умолчанию отдаются только `ACTIVE`. Если передан параметр `authorId`, возвращает объявления конкретного пользователя (включая `MODERATION`, `SOLD` и т.д.).
       operationId: listAds
-      summary: Получить список объявлений
-      description: |
-        Возвращает список активных объявлений.
-        По умолчанию отдаются только `ACTIVE`. 
-        Если передан параметр `authorId`, возвращает объявления конкретного пользователя (включая `MODERATION`, `SOLD` и т.д.).
-      security:
-        - {}
-        - keycloak: []
       parameters:
         - name: categoryId
+          required: false
           in: query
           description: Фильтр по ID категории
-          schema: { type: string }
+          schema:
+            type: string
         - name: location
+          required: false
           in: query
           description: Фильтр по городу
-          schema: { type: string }
+          schema:
+            type: string
         - name: authorId
+          required: false
           in: query
           description: Фильтр по имени пользователя (для "Моих объявлений")
-          schema: { type: string }
+          schema:
+            type: string
         - name: sort
+          required: false
           in: query
           description: Сортировка
           schema:
-            type: string
-            enum: [date-desc, date-asc, price-asc, price-desc]
             default: date-desc
+            type: string
+            enum:
+              - date-desc
+              - date-asc
+              - price-asc
+              - price-desc
+        - name: status
+          required: false
+          in: query
+          description: Фильтр по статусу (только admin)
+          schema:
+            $ref: '#/components/schemas/AdStatus'
       responses:
         '200':
-          description: Список объявлений
+          description: ''
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Ad'
-
-    post:
-      tags: [Ads]
-      operationId: createAd
-      summary: Создать объявление
-      description: |
-        Создаёт объявление со статусом `MODERATION`.
-        `authorId` берётся из токена. `createdAt` ставится сервером.
-        Изображения передаются массивом строк (идентификаторов изображений).
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      summary: Получить список объявлений
+      tags:
+        - Ads
       security:
+        - {}
         - keycloak: []
+    post:
+      description: Создаёт объявление со статусом `MODERATION`. `authorId` берётся из токена. `createdAt` ставится сервером. Изображения передаются массивом строк (идентификаторов изображений).
+      operationId: createAd
+      parameters: []
       requestBody:
         required: true
         content:
@@ -98,43 +110,68 @@ paths:
               $ref: '#/components/schemas/CreateAdRequest'
       responses:
         '201':
-          description: Объявление создано
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ad'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /ads/{id}:
-    parameters:
-      - $ref: '#/components/parameters/AdId'
-    get:
-      tags: [Ads]
-      operationId: getAd
-      summary: Получить объявление по ID
-      description: Объявления в статусе `MODERATION` доступны только автору и админу.
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
       security:
-        - {}
         - keycloak: []
+      summary: Создать объявление
+      tags:
+        - Ads
+  /ads/{id}:
+    get:
+      description: Объявления в статусе `MODERATION` доступны только автору и админу.
+      operationId: getAd
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Идентификатор объявления
+          schema:
+            type: string
       responses:
         '200':
-          description: Объявление
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ad'
         '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      tags: [Ads]
-      operationId: updateAd
-      summary: Обновить объявление
-      description: Только автор. После обновления статус сбрасывается в `MODERATION`.
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      summary: Получить объявление по ID
+      tags:
+        - Ads
       security:
+        - {}
         - keycloak: []
+    put:
+      description: Только автор. После обновления статус сбрасывается в `MODERATION`.
+      operationId: updateAd
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Идентификатор объявления
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -143,263 +180,187 @@ paths:
               $ref: '#/components/schemas/CreateAdRequest'
       responses:
         '200':
-          description: Обновлено
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ad'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '404':
-          $ref: '#/components/responses/NotFound'
-
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Обновить объявление
+      tags:
+        - Ads
   /ads/{id}/status:
-    parameters:
-      - $ref: '#/components/parameters/AdId'
     patch:
-      tags: [Ads]
-      operationId: updateAdStatus
-      summary: Сменить статус объявления
       description: Автор может ставить `SOLD` или `DELETE`. Админ может ставить любые статусы.
-      security:
-        - keycloak: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [status]
-              properties:
-                status:
-                  $ref: '#/components/schemas/AdStatus'
-      responses:
-        '200':
-          description: Статус изменен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ad'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /ads/{id}/moderate:
-    parameters:
-      - $ref: '#/components/parameters/AdId'
-    post:
-      tags: [Moderation]
-      operationId: moderateAd
-      summary: Модерация объявления
-      description: Только для администратора. Принимает `approve` (статус `ACTIVE`) или `reject` (статус `REJECTED`).
-      security:
-        - keycloak: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [decision]
-              properties:
-                decision:
-                  type: string
-                  enum: [approve, reject]
-      responses:
-        '200':
-          description: Объявление одобрено или отклонено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ad'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  /chats:
-    get:
-      tags: [Chat]
-      operationId: listChats
-      summary: Список чатов пользователя
-      description: Возвращает список чатов, где текущий пользователь является покупателем или продавцом.
-      security:
-        - keycloak: []
-      responses:
-        '200':
-          description: Список чатов
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChatListItem'
-
-  /chats/{chatId}/messages:
-    parameters:
-      - name: chatId
-        in: path
-        required: true
-        description: Формат ID — adId_user1_user2
-        schema: { type: string, example: "123_admin_user1" }
-    get:
-      tags: [Chat]
-      operationId: getChatMessages
-      summary: Получить сообщения чата
-      description: Возвращает историю сообщений. Также помечает их как прочитанные для текущего пользователя.
-      security:
-        - keycloak: []
-      responses:
-        '200':
-          description: Список сообщений
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChatMessage'
-    post:
-      tags: [Chat]
-      operationId: sendMessage
-      summary: Отправить сообщение
-      description: Отправка сообщения в чат.
-      security:
-        - keycloak: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [text]
-              properties:
-                text:
-                  type: string
-                  maxLength: 2000
-      responses:
-        '201':
-          description: Сообщение создано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatMessage'
-
-  /favorites:
-    get:
-      tags: [Favorites]
-      operationId: listFavorites
-      summary: Получить список ID избранных объявлений
-      security:
-        - keycloak: []
-      responses:
-        '200':
-          description: Массив ID объявлений
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-    post:
-      tags: [Favorites]
-      operationId: addFavorite
-      summary: Добавить объявление в избранное
-      security:
-        - keycloak: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [adId]
-              properties:
-                adId: { type: string }
-      responses:
-        '200': { description: Добавлено }
-
-  /favorites/{adId}:
-    parameters:
-      - name: adId
-        in: path
-        required: true
-        schema: { type: string }
-    delete:
-      tags: [Favorites]
-      operationId: removeFavorite
-      summary: Удалить объявление из избранного
-      security:
-        - keycloak: []
-      responses:
-        '204': { description: Удалено }
-
-  /notifications:
-    get:
-      tags: [Notifications]
-      operationId: listNotifications
-      summary: Получить уведомления пользователя
-      security:
-        - keycloak: []
-      responses:
-        '200':
-          description: Список уведомлений
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Notification'
-    delete:
-      tags: [Notifications]
-      operationId: clearNotifications
-      summary: Очистить все уведомления
-      security:
-        - keycloak: []
-      responses:
-        '204': { description: Очищено }
-
-  /notifications/read:
-    patch:
-      tags: [Notifications]
-      operationId: markAllAsRead
-      summary: Отметить все уведомления как прочитанные
-      security:
-        - keycloak: []
-      responses:
-        '200': { description: Успешно }
-
-  /dictionaries:
-    get:
-      tags: [Dictionaries]
-      operationId: getDictionaries
-      summary: Получить справочники (категории и города)
-      description: Используется для выпадающих списков на фронтенде.
-      responses:
-        '200':
-          description: Справочники
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  categories:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Option'
-                  locations:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Option'
-
-  /images/{id}:
-    get:
-      tags: [Images]
-      operationId: getImage
-      summary: Получить изображение по ID
-      description: |
-        Возвращает бинарный файл изображения по его идентификатору.
-        Сервер должен вернуть правильный заголовок Content-Type (например, image/jpeg).
+      operationId: updateAdStatus
       parameters:
         - name: id
-          in: path
           required: true
+          in: path
+          description: Идентификатор объявления
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdStatusRequest'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Сменить статус объявления
+      tags:
+        - Ads
+  /ads/{id}/moderate:
+    post:
+      description: Только для администратора. Принимает `approve` (статус `ACTIVE`) или `reject` (статус `REJECTED`).
+      operationId: moderateAd
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Идентификатор объявления
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerateAdRequest'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ad'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Модерация объявления
+      tags:
+        - Moderation
+  /images:
+    post:
+      operationId: uploadImage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageUploadResponse'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Загрузить изображение
+      tags:
+        - Images
+  /images/{id}:
+    get:
+      operationId: getImage
+      parameters:
+        - name: id
+          required: true
+          in: path
           description: Идентификатор изображения
           schema:
             type: string
@@ -420,51 +381,328 @@ paths:
                 type: string
                 format: binary
         '404':
-          $ref: '#/components/responses/NotFound'
-
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      summary: Получить изображение по ID
+      tags:
+        - Images
+  /notifications:
+    get:
+      operationId: listNotifications
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Получить уведомления пользователя
+      tags:
+        - Notifications
+    delete:
+      operationId: clearNotifications
+      parameters: []
+      responses:
+        '204':
+          description: Очищено
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Очистить все уведомления
+      tags:
+        - Notifications
+  /notifications/read:
+    patch:
+      operationId: markAllAsRead
+      parameters: []
+      responses:
+        '200':
+          description: Успешно
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Отметить все уведомления как прочитанные
+      tags:
+        - Notifications
+  /chats:
+    get:
+      description: Возвращает список чатов, где текущий пользователь является покупателем или продавцом.
+      operationId: listChats
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatListItem'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Список чатов пользователя
+      tags:
+        - Chat
+  /chats/{chatId}/messages:
+    get:
+      description: Возвращает историю сообщений. Также помечает их как прочитанные для текущего пользователя.
+      operationId: getChatMessages
+      parameters:
+        - name: chatId
+          required: true
+          in: path
+          description: Формат ID — adId_user1_user2
+          schema:
+            example: 123_admin_user1
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Получить сообщения чата
+      tags:
+        - Chat
+    post:
+      description: Отправка сообщения в чат.
+      operationId: sendMessage
+      parameters:
+        - name: chatId
+          required: true
+          in: path
+          description: Формат ID — adId_user1_user2
+          schema:
+            example: 123_admin_user1
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Отправить сообщение
+      tags:
+        - Chat
+  /favorites:
+    get:
+      operationId: listFavorites
+      parameters: []
+      responses:
+        '200':
+          description: Массив ID объявлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Получить список ID избранных объявлений
+      tags:
+        - Favorites
+    post:
+      operationId: addFavorite
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFavoriteRequest'
+      responses:
+        '200':
+          description: Добавлено
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Добавить объявление в избранное
+      tags:
+        - Favorites
+  /favorites/{adId}:
+    delete:
+      operationId: removeFavorite
+      parameters:
+        - name: adId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      security:
+        - keycloak: []
+      summary: Удалить объявление из избранного
+      tags:
+        - Favorites
+  /dictionaries:
+    get:
+      description: Используется для выпадающих списков на фронтенде.
+      operationId: getDictionaries
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionariesResponse'
+      summary: Получить справочники (категории и города)
+      tags:
+        - Dictionaries
 components:
   securitySchemes:
     keycloak:
       type: oauth2
-      description: Авторизация через Keycloak
       flows:
         authorizationCode:
           authorizationUrl: http://localhost:9200/realms/practics/protocol/openid-connect/auth
           tokenUrl: http://localhost:9200/realms/practics/protocol/openid-connect/token
           scopes:
             openid: Базовый scope OpenID Connect
-
-  parameters:
-    AdId:
-      name: id
-      in: path
-      required: true
-      description: Идентификатор объявления
-      schema:
-        type: string
-        example: '1729582345678'
-
+      description: Авторизация через Keycloak
   schemas:
     AdStatus:
       type: string
-      enum: [MODERATION, ACTIVE, SOLD, DELETE, REJECTED]
-
-    Option:
-      type: object
-      properties:
-        value: { type: string }
-        label: { type: string }
-
+      enum:
+        - MODERATION
+        - ACTIVE
+        - SOLD
+        - DELETE
+        - REJECTED
     Ad:
       type: object
-      required: [id, title, description, price, categoryId, status, location, authorId, phone, createdAt, images]
       properties:
         id:
           type: string
           example: '1'
         title:
           type: string
-          example: 'iPhone 13 Pro 256GB'
+          maxLength: 30
+          example: iPhone 13 Pro 256GB
         description:
           type: string
         price:
@@ -472,18 +710,13 @@ components:
           example: 750
         categoryId:
           type: string
-          example: 'electronics'
+          example: electronics
+        status:
+          allOf:
+            - $ref: '#/components/schemas/AdStatus'
         location:
           type: string
-          example: 'minsk'
-        status:
-          $ref: '#/components/schemas/AdStatus'
-        images:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Массив идентификаторов изображений (ID). Первый элемент — главное фото.
+          example: minsk
         authorId:
           type: string
           description: username автора (совпадает с preferred_username в Keycloak)
@@ -493,12 +726,47 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Дата и время создания в формате ISO 8601 (UTC)
           example: '2024-10-22T18:58:00.000Z'
-
+          description: Дата и время создания в формате ISO 8601 (UTC)
+        images:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Массив идентификаторов изображений (ID). Первый элемент — главное фото.
+      required:
+        - id
+        - title
+        - description
+        - price
+        - categoryId
+        - status
+        - location
+        - authorId
+        - phone
+        - createdAt
+        - images
+    ApiError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        error:
+          type: string
+          example: Bad Request
+      required:
+        - statusCode
+        - message
+        - error
     CreateAdRequest:
       type: object
-      required: [title, description, price, categoryId, location, phone, images]
       properties:
         title:
           type: string
@@ -520,39 +788,101 @@ components:
           items:
             type: string
             format: uuid
-          description: Массив идентификаторов уже загруженных изображений
           minItems: 1
           maxItems: 15
-
+          description: Массив идентификаторов уже загруженных изображений
+      required:
+        - title
+        - description
+        - price
+        - categoryId
+        - location
+        - phone
+        - images
+    UpdateAdStatusRequest:
+      type: object
+      properties:
+        status:
+          allOf:
+            - $ref: '#/components/schemas/AdStatus'
+      required:
+        - status
+    ModerateAdRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+            - approve
+            - reject
+      required:
+        - decision
+    ImageUploadResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+        - id
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-10-22T18:59:00.000Z'
+          description: Дата и время создания в формате ISO 8601 (UTC)
+        read:
+          type: boolean
+        link:
+          type: string
+          nullable: true
+          description: Ссылка для перехода к связанному объекту
+      required:
+        - id
+        - message
+        - createdAt
+        - read
     ChatMessage:
       type: object
-      required: [id, chatId, senderId, text, createdAt, isRead]
       properties:
         id:
           type: string
           example: '1729582345679'
         chatId:
           type: string
-          example: '1_admin_user'
+          example: 1_admin_user
         senderId:
           type: string
           description: username отправителя
-          example: 'user'
+          example: user
         text:
           type: string
         createdAt:
           type: string
           format: date-time
-          description: Дата и время отправки в формате ISO 8601 (UTC)
           example: '2024-10-22T18:59:00.000Z'
+          description: Дата и время отправки в формате ISO 8601 (UTC)
         isRead:
           type: boolean
-
+      required:
+        - id
+        - chatId
+        - senderId
+        - text
+        - createdAt
+        - isRead
     ChatListItem:
       type: object
       properties:
-        chatId: { type: string }
-        otherUser: 
+        chatId:
+          type: string
+        otherUser:
           type: string
           description: username собеседника
         ad:
@@ -561,57 +891,48 @@ components:
           $ref: '#/components/schemas/ChatMessage'
         unreadCount:
           type: integer
-
-    Notification:
+      required:
+        - chatId
+        - otherUser
+        - ad
+        - lastMessage
+        - unreadCount
+    SendMessageRequest:
       type: object
       properties:
-        id: { type: string }
-        message: { type: string }
-        createdAt: 
+        text:
           type: string
-          format: date-time
-          description: Дата и время создания в формате ISO 8601 (UTC)
-          example: '2024-10-22T18:59:00.000Z'
-        read: { type: boolean }
-
-    ApiError:
+          maxLength: 2000
+      required:
+        - text
+    AddFavoriteRequest:
       type: object
-      required: [statusCode, message]
       properties:
-        statusCode:
-          type: integer
-          example: 400
-        message:
-          oneOf:
-            - type: string
-            - type: array
-              items: { type: string }
-        error:
+        adId:
           type: string
-          example: 'Bad Request'
-
-  responses:
-    BadRequest:
-      description: Некорректный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    Unauthorized:
-      description: Нет токена или он недействителен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    Forbidden:
-      description: Недостаточно прав
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    NotFound:
-      description: Не найдено
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
+      required:
+        - adId
+    Option:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+        - value
+        - label
+    DictionariesResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+      required:
+        - categories
+        - locations

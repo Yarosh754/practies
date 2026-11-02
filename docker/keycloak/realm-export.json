@@ -34,7 +34,7 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
       "rootUrl": "http://localhost:9000",
       "baseUrl": "http://localhost:9000",

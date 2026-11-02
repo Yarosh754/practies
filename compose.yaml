@@ -10,6 +10,11 @@ services:
       - "9300:5432"
     volumes:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d practics"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
     networks:
       - practics
 
@@ -30,7 +35,8 @@ services:
     volumes:
       - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - practics
 
@@ -45,10 +51,15 @@ services:
       DB_USER: postgres
       DB_PASSWORD: arosv754
       DB_NAME: practics
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_EXTERNAL_URL: http://localhost:9200
+      KEYCLOAK_REALM: practics
+      CORS_ORIGINS: http://localhost:9000,http://localhost:5173
     ports:
       - "9100:3000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - practics
 

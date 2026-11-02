@@ -1,0 +1,7 @@
+export enum AdStatus {
+  MODERATION = 'MODERATION',
+  ACTIVE = 'ACTIVE',
+  SOLD = 'SOLD',
+  DELETE = 'DELETE',
+  REJECTED = 'REJECTED',
+}

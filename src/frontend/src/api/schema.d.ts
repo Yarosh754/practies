@@ -13,17 +13,13 @@ export interface paths {
         };
         /**
          * Получить список объявлений
-         * @description Возвращает список активных объявлений.
-         *     По умолчанию отдаются только `ACTIVE`.
-         *     Если передан параметр `authorId`, возвращает объявления конкретного пользователя (включая `MODERATION`, `SOLD` и т.д.).
+         * @description Возвращает список активных объявлений. По умолчанию отдаются только `ACTIVE`. Если передан параметр `authorId`, возвращает объявления конкретного пользователя (включая `MODERATION`, `SOLD` и т.д.).
          */
         get: operations["listAds"];
         put?: never;
         /**
          * Создать объявление
-         * @description Создаёт объявление со статусом `MODERATION`.
-         *     `authorId` берётся из токена. `createdAt` ставится сервером.
-         *     Изображения передаются массивом строк (идентификаторов изображений).
+         * @description Создаёт объявление со статусом `MODERATION`. `authorId` берётся из токена. `createdAt` ставится сервером. Изображения передаются массивом строк (идентификаторов изображений).
          */
         post: operations["createAd"];
         delete?: never;
@@ -36,10 +32,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
-            };
+            path?: never;
             cookie?: never;
         };
         /**
@@ -63,10 +56,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
@@ -86,10 +76,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
@@ -103,6 +90,75 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Загрузить изображение */
+        post: operations["uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/images/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Получить изображение по ID */
+        get: operations["getImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Получить уведомления пользователя */
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        /** Очистить все уведомления */
+        delete: operations["clearNotifications"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Отметить все уведомления как прочитанные */
+        patch: operations["markAllAsRead"];
         trace?: never;
     };
     "/chats": {
@@ -129,10 +185,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Формат ID — adId_user1_user2 */
-                chatId: string;
-            };
+            path?: never;
             cookie?: never;
         };
         /**
@@ -174,9 +227,7 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                adId: string;
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
@@ -187,41 +238,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Получить уведомления пользователя */
-        get: operations["listNotifications"];
-        put?: never;
-        post?: never;
-        /** Очистить все уведомления */
-        delete: operations["clearNotifications"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/notifications/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Отметить все уведомления как прочитанные */
-        patch: operations["markAllAsRead"];
         trace?: never;
     };
     "/dictionaries": {
@@ -244,37 +260,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/images/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Получить изображение по ID
-         * @description Возвращает бинарный файл изображения по его идентификатору.
-         *     Сервер должен вернуть правильный заголовок Content-Type (например, image/jpeg).
-         */
-        get: operations["getImage"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
         AdStatus: "MODERATION" | "ACTIVE" | "SOLD" | "DELETE" | "REJECTED";
-        Option: {
-            value?: string;
-            label?: string;
-        };
         Ad: {
             /** @example 1 */
             id: string;
@@ -285,11 +276,9 @@ export interface components {
             price: number;
             /** @example electronics */
             categoryId: string;
+            status: components["schemas"]["AdStatus"];
             /** @example minsk */
             location: string;
-            status: components["schemas"]["AdStatus"];
-            /** @description Массив идентификаторов изображений (ID). Первый элемент — главное фото. */
-            images: string[];
             /** @description username автора (совпадает с preferred_username в Keycloak) */
             authorId: string;
             /** @example +375291234567 */
@@ -300,6 +289,15 @@ export interface components {
              * @example 2024-10-22T18:58:00.000Z
              */
             createdAt: string;
+            /** @description Массив идентификаторов изображений (ID). Первый элемент — главное фото. */
+            images: string[];
+        };
+        ApiError: {
+            /** @example 400 */
+            statusCode: number;
+            message: string | string[];
+            /** @example Bad Request */
+            error: string;
         };
         CreateAdRequest: {
             title: string;
@@ -310,6 +308,30 @@ export interface components {
             phone: string;
             /** @description Массив идентификаторов уже загруженных изображений */
             images: string[];
+        };
+        UpdateAdStatusRequest: {
+            status: components["schemas"]["AdStatus"];
+        };
+        ModerateAdRequest: {
+            /** @enum {string} */
+            decision: "approve" | "reject";
+        };
+        ImageUploadResponse: {
+            /** Format: uuid */
+            id: string;
+        };
+        Notification: {
+            id: string;
+            message: string;
+            /**
+             * Format: date-time
+             * @description Дата и время создания в формате ISO 8601 (UTC)
+             * @example 2024-10-22T18:59:00.000Z
+             */
+            createdAt: string;
+            read: boolean;
+            /** @description Ссылка для перехода к связанному объекту */
+            link?: string | null;
         };
         ChatMessage: {
             /** @example 1729582345679 */
@@ -331,74 +353,30 @@ export interface components {
             isRead: boolean;
         };
         ChatListItem: {
-            chatId?: string;
+            chatId: string;
             /** @description username собеседника */
-            otherUser?: string;
-            ad?: components["schemas"]["Ad"];
-            lastMessage?: components["schemas"]["ChatMessage"];
-            unreadCount?: number;
+            otherUser: string;
+            ad: components["schemas"]["Ad"];
+            lastMessage: components["schemas"]["ChatMessage"];
+            unreadCount: number;
         };
-        Notification: {
-            id?: string;
-            message?: string;
-            /**
-             * Format: date-time
-             * @description Дата и время создания в формате ISO 8601 (UTC)
-             * @example 2024-10-22T18:59:00.000Z
-             */
-            createdAt?: string;
-            read?: boolean;
+        SendMessageRequest: {
+            text: string;
         };
-        ApiError: {
-            /** @example 400 */
-            statusCode: number;
-            message: string | string[];
-            /** @example Bad Request */
-            error?: string;
+        AddFavoriteRequest: {
+            adId: string;
+        };
+        Option: {
+            value: string;
+            label: string;
+        };
+        DictionariesResponse: {
+            categories: components["schemas"]["Option"][];
+            locations: components["schemas"]["Option"][];
         };
     };
-    responses: {
-        /** @description Некорректный запрос */
-        BadRequest: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Нет токена или он недействителен */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Недостаточно прав */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Не найдено */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-    };
-    parameters: {
-        /** @description Идентификатор объявления */
-        AdId: string;
-    };
+    responses: never;
+    parameters: never;
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -416,6 +394,8 @@ export interface operations {
                 authorId?: string;
                 /** @description Сортировка */
                 sort?: "date-desc" | "date-asc" | "price-asc" | "price-desc";
+                /** @description Фильтр по статусу (только admin) */
+                status?: components["schemas"]["AdStatus"];
             };
             header?: never;
             path?: never;
@@ -423,13 +403,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Список объявлений */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["Ad"][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
         };
@@ -447,7 +434,6 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Объявление создано */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -456,8 +442,22 @@ export interface operations {
                     "application/json": components["schemas"]["Ad"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
         };
     };
     getAd: {
@@ -466,13 +466,12 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
+                id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Объявление */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -481,7 +480,14 @@ export interface operations {
                     "application/json": components["schemas"]["Ad"];
                 };
             };
-            404: components["responses"]["NotFound"];
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
         };
     };
     updateAd: {
@@ -490,7 +496,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
+                id: string;
             };
             cookie?: never;
         };
@@ -500,7 +506,6 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Обновлено */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -509,8 +514,30 @@ export interface operations {
                     "application/json": components["schemas"]["Ad"];
                 };
             };
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
         };
     };
     updateAdStatus: {
@@ -519,19 +546,16 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
+                id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": {
-                    status: components["schemas"]["AdStatus"];
-                };
+                "application/json": components["schemas"]["UpdateAdStatusRequest"];
             };
         };
         responses: {
-            /** @description Статус изменен */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -540,7 +564,38 @@ export interface operations {
                     "application/json": components["schemas"]["Ad"];
                 };
             };
-            403: components["responses"]["Forbidden"];
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
         };
     };
     moderateAd: {
@@ -549,20 +604,16 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Идентификатор объявления */
-                id: components["parameters"]["AdId"];
+                id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @enum {string} */
-                    decision: "approve" | "reject";
-                };
+                "application/json": components["schemas"]["ModerateAdRequest"];
             };
         };
         responses: {
-            /** @description Объявление одобрено или отклонено */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -571,220 +622,78 @@ export interface operations {
                     "application/json": components["schemas"]["Ad"];
                 };
             };
-            403: components["responses"]["Forbidden"];
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
         };
     };
-    listChats: {
+    uploadImage: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Список чатов */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChatListItem"][];
-                };
-            };
-        };
-    };
-    getChatMessages: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Формат ID — adId_user1_user2 */
-                chatId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Список сообщений */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChatMessage"][];
-                };
-            };
-        };
-    };
-    sendMessage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Формат ID — adId_user1_user2 */
-                chatId: string;
-            };
-            cookie?: never;
-        };
         requestBody: {
             content: {
-                "application/json": {
-                    text: string;
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
                 };
             };
         };
         responses: {
-            /** @description Сообщение создано */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ChatMessage"];
+                    "application/json": components["schemas"]["ImageUploadResponse"];
                 };
             };
-        };
-    };
-    listFavorites: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Массив ID объявлений */
-            200: {
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string[];
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
-        };
-    };
-    addFavorite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    adId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Добавлено */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    removeFavorite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                adId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Удалено */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    listNotifications: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Список уведомлений */
-            200: {
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Notification"][];
-                };
-            };
-        };
-    };
-    clearNotifications: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Очищено */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    markAllAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Успешно */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getDictionaries: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Справочники */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        categories?: components["schemas"]["Option"][];
-                        locations?: components["schemas"]["Option"][];
-                    };
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
         };
@@ -812,7 +721,353 @@ export interface operations {
                     "image/webp": string;
                 };
             };
-            404: components["responses"]["NotFound"];
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    clearNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Очищено */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Успешно */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    listChats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatListItem"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    getChatMessages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Формат ID — adId_user1_user2 */
+                chatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    sendMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Формат ID — adId_user1_user2 */
+                chatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMessageRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    listFavorites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Массив ID объявлений */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    addFavorite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddFavoriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Добавлено */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    removeFavorite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Удалено */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    getDictionaries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DictionariesResponse"];
+                };
+            };
         };
     };
 }
