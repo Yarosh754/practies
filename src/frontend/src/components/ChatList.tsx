@@ -1,23 +1,33 @@
-import type { ChatListItem } from '../contexts/ChatContext';
+import type { components } from '../api/schema';
 import Chat from './Chat';
 import './ChatList.css';
+
+type ChatListItem = components['schemas']['ChatListItem'];
 
 interface ChatsListProps {
   chats: ChatListItem[];
   activeChatId: string | null;
+  loading: boolean;
   onSelectChat: (chatId: string) => void;
 }
 
-function ChatList({ chats, activeChatId, onSelectChat }: ChatsListProps) {
+function ChatList({
+  chats,
+  activeChatId,
+  loading,
+  onSelectChat,
+}: ChatsListProps) {
   return (
     <div className="chatlist-main-container">
       <h2 className="chatlist-title">Сообщения</h2>
       <div className="chatlist-chat">
-        {chats.length === 0 ? (
+        {loading ? (
+          <p className="chatlist-empty">Загрузка...</p>
+        ) : chats.length === 0 ? (
           <p className="chatlist-empty">Нет чатов</p>
         ) : (
           chats.map((chat) => (
-            <Chat key={chat.chatId} chat={chat} isActive={chat.chatId === activeChatId} onClick={() => onSelectChat(chat.chatId)} />
+            <Chat key={chat.chatId} chat={chat} isActive={chat.chatId === activeChatId} onClick={() => onSelectChat(chat.chatId)}/>
           ))
         )}
       </div>

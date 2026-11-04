@@ -1,7 +1,9 @@
-import type { ChatListItem } from '../contexts/ChatContext';
+import type { components } from '../api/schema';
 import { formatDate } from '../utils/dateUtils';
 import './Chat.css';
 import ImageComponent from './ImageComponent';
+
+type ChatListItem = components['schemas']['ChatListItem'];
 
 interface ChatProps {
   chat: ChatListItem;

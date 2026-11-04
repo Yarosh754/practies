@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAds } from '../contexts/AdContext';
 import { useAuth } from '../contexts/AuthContext';
-import { seedCategories, seedLocations } from '../storage/seedAd';
+import { useDictionaries } from '../contexts/DictionariesContext';
 import './CreateAd.css';
 import { toast } from 'sonner';
-import { useNotifications } from '../contexts/NotificationsContext';
-import { processImageFile } from '../utils/imageUtils';
-import type { Ad } from '../types';
+import { prepareImageFile } from '../utils/imageUtils';
+import { getApiErrorMessage } from '../api/helpers';
+import type { components } from '../api/schema';
 import ImageComponent from '../components/ImageComponent';
+
+type CreateAdRequest = components['schemas']['CreateAdRequest'];
 
 interface FormState {
   title: string;
@@ -26,81 +28,113 @@ function CreateAd() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
 
-  const { ads, addAd, updateAd } = useAds();
-  const { user } = useAuth();
+  const { getAd, createAd, updateAd, uploadImage } = useAds();
+  const { user, authtrue } = useAuth();
+  const { categories, locations } = useDictionaries();
   const navigate = useNavigate();
-
-  const { addNotification } = useNotifications();
 
   const [form, setForm] = useState<FormState>({
     title: '',
     images: [],
     description: '',
     price: '',
-    categoryId: seedCategories[0].value,
-    location: seedLocations[1].value,
+    categoryId: '',
+    location: '',
     phone: '',
   });
 
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [loading, setLoading] = useState(isEdit);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const effectiveCategoryId = form.categoryId || categories[0]?.value || '';
+  const effectiveLocation = form.location || locations[0]?.value || '';
 
   useEffect(() => {
-    if (!isEdit || !id) return;
-
-    const ad = ads.find((a) => a.id === id);
-    if (!ad) return;
-
-    setForm({
-      title: ad.title,
-      images: ad.images || [],
-      description: ad.description,
-      price: String(ad.price),
-      categoryId: ad.categoryId,
-      location: ad.location,
-      phone: ad.phone,
-    });
-  }, [id, isEdit, ads]);
-
-  if (isEdit && id) {
-    const ad = ads.find((a) => a.id === id);
-    if (!ad) {
-      return (
-        <div className="createAd-main-container">
-          <p className="createAd-empty">Объявление не найдено.</p>
-        </div>
-      );
+    if (!isEdit || !id) {
+      return;
     }
 
-    if (ad.authorId !== user.username) {
-      return (
-        <div className="createAd-main-container">
-          <p className="createAd-empty">Вы не можете редактировать чужое объявление.</p>
-        </div>
-      );
-    }
-  }
+    let cancelled = false;
 
-  const update = (key: keyof FormState, value: any) => {
+    getAd(id)
+      .then((ad) => {
+        if (cancelled) return;
+
+        if (user?.username && ad.authorId !== user.username) {
+          setError('Вы не можете редактировать чужое объявление.');
+          return;
+        }
+
+        setError(null);
+        setForm({
+          title: ad.title,
+          images: ad.images || [],
+          description: ad.description,
+          price: String(ad.price),
+          categoryId: ad.categoryId,
+          location: ad.location,
+          phone: ad.phone,
+        });
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setError(
+            getApiErrorMessage(requestError, 'Объявление не найдено.'),
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isEdit, getAd, user?.username]);
+
+  const update = (key: keyof FormState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     if (form.images.length + files.length > 15) {
       toast.error('Максимум 15 фотографий');
+      e.target.value = '';
       return;
     }
 
-    const newImages: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const base64 = await processImageFile(files[i]);
-      newImages.push(base64);
+    if (!authtrue) {
+      toast.error('Войдите, чтобы загрузить фотографии');
+      e.target.value = '';
+      return;
     }
 
-    update('images', [...form.images, ...newImages]);
-    e.target.value = '';
+    setUploading(true);
+    try {
+      const uploadedIds: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const preparedFile = await prepareImageFile(file);
+        const imageId = await uploadImage(preparedFile);
+        uploadedIds.push(imageId);
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedIds],
+      }));
+    } catch (requestError) {
+      toast.error(getApiErrorMessage(requestError));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const removeImage = (index: number) => {
@@ -111,41 +145,70 @@ function CreateAd() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!authtrue || !user?.username) {
+      toast.error('Требуется авторизация');
+      return;
+    }
 
     if (form.images.length === 0) {
       toast.error('Загрузите хотя бы одну фотографию');
       return;
     }
 
-    const createad = {
+    if (!effectiveCategoryId || !effectiveLocation) {
+      toast.error('Дождитесь загрузки справочников и выберите категорию и город');
+      return;
+    }
+
+    const payload: CreateAdRequest = {
       title: form.title.trim(),
       images: form.images,
       description: form.description.trim(),
       price: Number(form.price),
-      categoryId: form.categoryId,
-      location: form.location,
+      categoryId: effectiveCategoryId,
+      location: effectiveLocation,
       phone: form.phone.trim(),
-      status: 'MODERATION' as const,
-      authorId: user.username,
     };
 
-    let createdAd: Ad; 
+    const successMessage = isEdit
+      ? `Объявление "${form.title}" отредактировано и отправлено на модерацию`
+      : `Объявление "${form.title}" создано и отправлено на модерацию`;
 
-    if (isEdit && id) {
-      updateAd(id, createad);
-      createdAd = { ...createad, id, createdAt: '...' }; 
-    } else {
-      createdAd = addAd(createad);
+    setSubmitting(true);
+    try {
+      if (isEdit && id) {
+        await updateAd(id, payload);
+      } else {
+        await createAd(payload);
+      }
+
+      toast.success(successMessage);
+      navigate('/myAds');
+    } catch (requestError) {
+      toast.error(getApiErrorMessage(requestError));
+    } finally {
+      setSubmitting(false);
     }
-
-    const message = isEdit ? `Объявление "${form.title}" отредактировано и отправлено на модерацию` : `Объявление "${form.title}" создано и отправлено на модерацию`;
-    toast.success(message);
-    addNotification(user.username, message, `/adMain/${createdAd.id}`);
-
-    navigate('/myAds');
   };
+
+  if (loading) {
+    return (
+      <div className="createAd-main-container">
+        <p className="createAd-empty">Загрузка объявления...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="createAd-main-container">
+        <p className="createAd-empty">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="createAd-main-container">
@@ -166,19 +229,21 @@ function CreateAd() {
 
           <div className="createAd-mini-img">
             {form.images.map((img, i) => (
-              <div key={i} className={`createAd-img ${previewIndex === i ? 'active' : ''}`} onClick={() => setPreviewIndex(i)}>
+              <div key={img} className={`createAd-img ${previewIndex === i ? 'active' : ''}`} onClick={() => setPreviewIndex(i)}>
                 <ImageComponent className="createAd-image" src={img} />
-                <button type="button" className="createAd-img-delete" onClick={(e) => { e.stopPropagation(); removeImage(i); }}>
+                <button type="button" className="createAd-img-delete" onClick={(e) => {e.stopPropagation();removeImage(i);}}>
                   <img src={DELETE_IMG} alt="Удалить" className="delete-icon" />
                 </button>
               </div>
             ))}
-            
+
             {form.images.length < 15 && (
               <label className="createAd-upload-label">
                 <span className='createAd-img-span'>+</span>
-                <p className='p-createAd-img'>Добавить</p>
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: 'none' }} />
+                <p className='p-createAd-img'>
+                  {uploading ? 'Загрузка' : 'Добавить'}
+                </p>
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="createAd-file-input" disabled={uploading} />
               </label>
             )}
           </div>
@@ -197,17 +262,17 @@ function CreateAd() {
         </label>
 
         <label className="createAd-label">Категория
-          <select className="createAd-select" value={form.categoryId} onChange={(e) => update('categoryId', e.target.value)} required >
-            {seedCategories.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+          <select className="createAd-select" value={effectiveCategoryId} onChange={(e) => update('categoryId', e.target.value)} required >
+            {categories.map((category) => (
+              <option key={category.value} value={category.value}>{category.label}</option>
             ))}
           </select>
         </label>
 
         <label className="createAd-label">Город
-          <select className="createAd-select" value={form.location} onChange={(e) => update('location', e.target.value)} required >
-            {seedLocations.filter((l) => l.value !== '').map((l) => (
-              <option key={l.value} value={l.value}>{l.label}</option>
+          <select className="createAd-select" value={effectiveLocation} onChange={(e) => update('location', e.target.value)} required >
+            {locations.map((location) => (
+              <option key={location.value} value={location.value}>{location.label}</option>
             ))}
           </select>
         </label>
@@ -220,8 +285,8 @@ function CreateAd() {
           <button type="button" className="createAd-cancel-button" onClick={() => navigate(-1)} >
             Отмена
           </button>
-          <button type="submit" className="createAd-submit-button">
-            {isEdit ? 'Сохранить изменения' : 'Опубликовать'}
+          <button type="submit" className="createAd-submit-button" disabled={submitting || uploading}>
+            {submitting ? 'Сохранение...' : isEdit ? 'Сохранить изменения' : 'Опубликовать'}
           </button>
         </div>
       </form>

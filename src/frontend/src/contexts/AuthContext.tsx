@@ -1,10 +1,18 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect,useState,type ReactNode,} from 'react';
 import Keycloak from 'keycloak-js';
+
+export type AuthUser = {
+  id?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
 
 interface AuthContextType {
   keycloak: Keycloak | null;
   authtrue: boolean;
-  user: any;
+  user: AuthUser | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,7 +26,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [keycloak, setKeycloak] = useState<Keycloak | null>(null);
   const [authtrue, setAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const kc = new Keycloak({
@@ -26,6 +34,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       realm: import.meta.env.VITE_KEYCLOAK_REALM,
       clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
     });
+
+    kc.onTokenExpired = () => {
+      kc.updateToken(30).catch(() => {
+        setAuthenticated(false);
+        setUser(null);
+      });
+    };
 
     kc.init({
       onLoad: 'check-sso',

@@ -132,6 +132,12 @@
     background: #09a866;
     transform: scale(0.95);
 }
+.createAd-submit-button:disabled,
+.createAd-cancel-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
 
 .createAd-photos-block {
     display: flex;
@@ -221,6 +227,10 @@
     height: 15px;
     object-fit: contain;
     pointer-events: none;
+}
+
+.createAd-file-input {
+    display: none;
 }
 
 .createAd-upload-label {

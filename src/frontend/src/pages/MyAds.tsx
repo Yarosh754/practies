@@ -1,75 +1,118 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdComponent from '../components/AdComponent';
 import { useAds } from '../contexts/AdContext';
-import { seedStatus, seedLocations } from '../storage/seedAd';
-import './MyAds.css';
 import { useAuth } from '../contexts/AuthContext';
+import { useDictionaries } from '../contexts/DictionariesContext';
+import { getApiErrorMessage } from '../api/helpers';
+import { statusOptions, type AdSort } from '../constants/filters';
+import type { components } from '../api/schema';
+import './MyAds.css';
+
+type Ad = components['schemas']['Ad'];
 
 interface FiltersValue {
   status: string;
-  sort: string;
+  sort: AdSort;
 }
 
 function MyAds() {
-  const { ads } = useAds();
-  const {user} = useAuth();
+  const { listAds } = useAds();
+  const { user, authtrue } = useAuth();
+  const { getLocationLabel } = useDictionaries();
 
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FiltersValue>({
-    status:'ACTIVE',
-    sort: 'date-desc'
+    status: 'ACTIVE',
+    sort: 'date-desc',
   });
 
   const updateFilter = (key: keyof FiltersValue, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }) as FiltersValue);
   };
 
   const handleClearFilters = () => {
-    setFilters({status: 'ACTIVE', sort: 'date-desc'})
+    setFilters({ status: 'ACTIVE', sort: 'date-desc' });
   };
 
-  const isFiltersDefault = filters.status === 'ACTIVE' && filters.sort === 'date-desc';
+  const isFiltersDefault =
+    filters.status === 'ACTIVE' && filters.sort === 'date-desc';
 
-  let visibleAds = ads.filter((ad) => {
-    if (ad.authorId !== user.username) return false;
-    if (filters.status && ad.status !== filters.status) return false;
-    return true;
-  });
+  useEffect(() => {
+    if (!authtrue || !user?.username) {
+      return;
+    }
 
-  visibleAds = [...visibleAds].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    let cancelled = false;
+
+    listAds({ authorId: user.username, sort: filters.sort })
+      .then((data) => {
+        if (!cancelled) {
+          setAds(data);
+          setError(null);
+        }
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setAds([]);
+          setError(getApiErrorMessage(requestError));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authtrue, user?.username, filters.sort, listAds]);
+
+  const visibleAds = filters.status
+    ? ads.filter((ad) => ad.status === filters.status)
+    : ads;
 
   return (
-      <div className="myAds-main-container">
-        <div className="myAds-header-container">
-          <p className="p-myAds-ads">Мои объявления</p>
-        </div>
+    <div className="myAds-main-container">
+      <div className="myAds-header-container">
+        <p className="p-myAds-ads">Мои объявления</p>
+      </div>
 
-        <div className="myAds-filters-container">
-          <select className={`myAds-select-container ${filters.status !== 'ACTIVE' ? 'active' : ''}`} value={filters.status} onChange={(e) => updateFilter('status', e.target.value)} >
-            {seedStatus.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-          {!isFiltersDefault && (
-            <button type="button" className="myAds-clear-button" onClick={handleClearFilters}>
-              Очистить фильтры
-            </button>
-          )}
-        </div>
-
-        {visibleAds.length === 0 ? (
-          <p className="p-myAds-empty">Ничего не найдено. Измените фильтры.</p>
-        ) : (
-          <div className="myAds-ads-container">
-            {visibleAds.map((ad) => (
-              <Link key={ad.id} to={`/adMain/${ad.id}`} className="ad-link">
-                <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.images?.[0] || ''} location={seedLocations.find((i) => i.value === ad.location)?.label ?? ad.location} date={ad.createdAt} />
-             </Link>
-            ))}
-          </div>
+      <div className="myAds-filters-container">
+        <select className={`myAds-select-container ${filters.status !== 'ACTIVE' ? 'active' : ''}`} value={filters.status} onChange={(e) => updateFilter('status', e.target.value)} >
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {!isFiltersDefault && (
+          <button type="button" className="myAds-clear-button" onClick={handleClearFilters}>
+            Очистить фильтры
+          </button>
         )}
       </div>
-    );
-  }
+
+      {!authtrue ? (
+        <p className="p-myAds-empty">Войдите, чтобы увидеть свои объявления.</p>
+      ) : loading ? (
+        <p className="p-myAds-empty">Загрузка объявлений...</p>
+      ) : error ? (
+        <p className="p-myAds-empty">{error}</p>
+      ) : visibleAds.length === 0 ? (
+        <p className="p-myAds-empty">Ничего не найдено. Измените фильтры.</p>
+      ) : (
+        <div className="myAds-ads-container">
+          {visibleAds.map((ad) => (
+            <Link key={ad.id} to={`/adMain/${ad.id}`} className="ad-link">
+              <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.images?.[0] || ''} location={getLocationLabel(ad.location)} date={ad.createdAt} />
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default MyAds;

@@ -9,21 +9,24 @@ import { FavoritesProvider } from './contexts/FavoriteContext';
 import { Toaster } from 'sonner';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { ChatProvider } from './contexts/ChatContext';
+import { DictionariesProvider } from './contexts/DictionariesContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <NotificationsProvider>
-          <AdProvider>
-            <ChatProvider>
-              <FavoritesProvider>
-                <App />
-                <Toaster position="bottom-right" richColors />
-              </FavoritesProvider>
-            </ChatProvider>
-          </AdProvider>
-        </NotificationsProvider>
+        <AdProvider>
+          <DictionariesProvider>
+            <NotificationsProvider>
+              <ChatProvider>
+                <FavoritesProvider>
+                  <App />
+                  <Toaster position="bottom-right" richColors />
+                </FavoritesProvider>
+              </ChatProvider>
+            </NotificationsProvider>
+          </DictionariesProvider>
+        </AdProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

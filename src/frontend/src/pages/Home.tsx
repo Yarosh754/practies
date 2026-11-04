@@ -1,61 +1,91 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdComponent from '../components/AdComponent';
 import { useAds } from '../contexts/AdContext';
-import { seedCategories, seedLocations, seedSortOptions } from '../storage/seedAd';
-import './Home.css';
 import { useFavorites } from '../contexts/FavoriteContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDictionaries } from '../contexts/DictionariesContext';
+import { getApiErrorMessage } from '../api/helpers';
+import { sortOptions, type AdSort } from '../constants/filters';
+import type { components } from '../api/schema';
+import './Home.css';
+
+type Ad = components['schemas']['Ad'];
 
 interface FiltersValue {
   category: string;
   location: string;
-  sort: string;
+  sort: AdSort;
   favoritesOnly: boolean;
 }
 
 function Home() {
-  const { ads } = useAds();
+  const { listAds } = useAds();
   const { favorites } = useFavorites();
   const { authtrue } = useAuth();
+  const { categories, locations, getLocationLabel } = useDictionaries();
 
   const [filters, setFilters] = useState<FiltersValue>({
     category: '',
     location: '',
     sort: 'date-desc',
-    favoritesOnly: false
+    favoritesOnly: false,
   });
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const updateFilter = (key: keyof FiltersValue, value: string | boolean) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }) as FiltersValue);
   };
 
   const handleClearFilters = () => {
-    setFilters({category: '', location: '', sort: 'date-desc', favoritesOnly: false})
+    setFilters({
+      category: '',
+      location: '',
+      sort: 'date-desc',
+      favoritesOnly: false,
+    });
   };
 
-    const isFiltersDefault = filters.category === '' && filters.location === '' && filters.sort === 'date-desc' && filters.favoritesOnly === false;
+  const isFiltersDefault =
+    filters.category === '' &&
+    filters.location === '' &&
+    filters.sort === 'date-desc' &&
+    filters.favoritesOnly === false;
 
-  let visibleAds = ads.filter((ad) => {
-    if (ad.status !== 'ACTIVE') return false;
-    if (filters.category && ad.categoryId !== filters.category) return false;
-    if (filters.location && ad.location !== filters.location) return false;
-    if (filters.favoritesOnly && !favorites.includes(ad.id)) return false;
-    return true;
-  });
+  useEffect(() => {
+    let cancelled = false;
 
-  visibleAds = [...visibleAds].sort((a, b) => {
-    const timeA = new Date(a.createdAt).getTime();
-    const timeB = new Date(b.createdAt).getTime();
+    listAds({
+      categoryId: filters.category || undefined,
+      location: filters.location || undefined,
+      sort: filters.sort,
+    })
+      .then((data) => {
+        if (!cancelled) {
+          setAds(data);
+          setError(null);
+        }
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setAds([]);
+          setError(getApiErrorMessage(requestError));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    switch (filters.sort) {
-      case 'price-asc': return a.price - b.price;
-      case 'price-desc': return b.price - a.price;
-      case 'date-asc': return timeA - timeB; 
-      case 'date-desc':
-      default: return timeB - timeA; 
-    }
-  });
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.category, filters.location, filters.sort, listAds]);
+
+  const visibleAds = filters.favoritesOnly
+    ? ads.filter((ad) => favorites.includes(ad.id))
+    : ads;
 
   return (
     <div className="home-main-container">
@@ -65,42 +95,53 @@ function Home() {
       <div className="home-filters-container">
         <select className={`home-select-container ${filters.category ? 'active' : ''}`} value={filters.category} onChange={(e) => updateFilter('category', e.target.value)}>
           <option value="">Все категории</option>
-          {seedCategories.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
-        
-        <select className={`home-select-container ${filters.location ? 'active' : ''}`} value={filters.location} onChange={(e) => updateFilter('location', e.target.value)}>
-          {seedLocations.map((l) => (
-            <option key={l.value} value={l.value}>{l.label}</option>
+          {categories.map((category) => (
+            <option key={category.value} value={category.value}>
+              {category.label}
+            </option>
           ))}
         </select>
 
-        <select className={`home-select-container ${filters.sort !== 'date-desc' ? 'active' : ''}`} value={filters.sort} onChange={(e) => updateFilter('sort', e.target.value)}>
-          {seedSortOptions.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+        <select className={`home-select-container ${filters.location ? 'active' : ''}`} value={filters.location} onChange={(e) => updateFilter('location', e.target.value)} >
+          <option value="">Все города</option>
+          {locations.map((location) => (
+            <option key={location.value} value={location.value}>
+              {location.label}
+            </option>
+          ))}
+        </select>
+
+        <select className={`home-select-container ${filters.sort !== 'date-desc' ? 'active' : ''}`} value={filters.sort} onChange={(e) => updateFilter('sort', e.target.value)} >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
           ))}
         </select>
 
         {authtrue && (
-          <button type="button" className={`home-favorite-toggle ${filters.favoritesOnly ? 'active' : ''}`} onClick={() => updateFilter('favoritesOnly', !filters.favoritesOnly)}>
+          <button type="button" className={`home-favorite-toggle ${filters.favoritesOnly ? 'active' : ''}`} onClick={() => updateFilter('favoritesOnly', !filters.favoritesOnly)} >
             Избранное {favorites.length > 0 && `(${favorites.length})`}
           </button>
         )}
         {!isFiltersDefault && (
-          <button type="button" className='home-clear-button' onClick={handleClearFilters}>
+          <button type="button" className="home-clear-button" onClick={handleClearFilters} >
             Очистить фильтры
           </button>
         )}
       </div>
 
-      {visibleAds.length === 0 ? (
+      {loading ? (
+        <p className="p-home-empty">Загрузка объявлений...</p>
+      ) : error ? (
+        <p className="p-home-empty">{error}</p>
+      ) : visibleAds.length === 0 ? (
         <p className="p-home-empty">Ничего не найдено. Измените фильтры.</p>
       ) : (
         <div className="home-ads-container">
           {visibleAds.map((ad) => (
             <Link key={ad.id} to={`/adMain/${ad.id}`} className="ad-link">
-              <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.images?.[0] || ''} location={seedLocations.find((i) => i.value===ad.location)?.label ?? ad.location} date={ad.createdAt} />
+              <AdComponent adId={ad.id} title={ad.title} price={ad.price} image={ad.images?.[0] || ''} location={getLocationLabel(ad.location)} date={ad.createdAt}/>
             </Link>
           ))}
         </div>

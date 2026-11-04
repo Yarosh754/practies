@@ -1,132 +1,153 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import {createContext,useCallback,useContext,useEffect,useMemo,useState,type ReactNode,} from 'react';
+import { apiClient } from '../api/client';
+import { getApiErrorMessage } from '../api/helpers';
+import type { components } from '../api/schema';
 import { useAuth } from './AuthContext';
-import { useAds } from './AdContext';
-import { useNotifications } from './NotificationsContext';
-import { loadFromStorage, saveToStorage } from '../storage/storage';
-import type { ChatMessage, Ad } from '../types';
 
-export interface ChatListItem {
-  chatId: string;
-  ad: Ad;
-  otherUser: string;
-  lastMessage: ChatMessage;
-  unreadCount: number;
-}
+type ChatListItem = components['schemas']['ChatListItem'];
+type ChatMessage = components['schemas']['ChatMessage'];
 
 interface ChatContextType {
-  messages: ChatMessage[];
+  chats: ChatListItem[];
   totalUnreadMessages: number;
-  sendMessage: (chatId: string, text: string) => void;
-  markChatAsRead: (chatId: string) => void;
+  loadingChats: boolean;
+  reloadChats: () => Promise<void>;
   getMessagesForChat: (chatId: string) => ChatMessage[];
-  getChatsList: () => ChatListItem[];
+  loadMessages: (chatId: string) => Promise<ChatMessage[]>;
+  sendMessage: (chatId: string, text: string) => Promise<void>;
 }
 
-const ChatContext = createContext<ChatContextType>({
-  messages: [],
-  totalUnreadMessages: 0,
-  sendMessage: () => {},
-  markChatAsRead: () => {},
-  getMessagesForChat: () => [],
-  getChatsList: () => [],
-});
+const ChatContext = createContext<ChatContextType | null>(null);
 
-export const useChat = () => useContext(ChatContext);
+export const useChat = () => {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error('useChat должен использоваться внутри ChatProvider');
+  }
+  return context;
+};
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
-  const { ads } = useAds();
-  const { addNotification } = useNotifications();
-  const currentUsername = user?.username ?? null;
+  const { keycloak, authtrue } = useAuth();
+  const [chats, setChats] = useState<ChatListItem[]>([]);
+  const [messagesByChat, setMessagesByChat] = useState<
+    Record<string, ChatMessage[]>
+  >({});
+  const [loadingChats, setLoadingChats] = useState(false);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    loadFromStorage<ChatMessage[]>('messages', []),
-  );
+  const reloadChats = useCallback(async () => {
+    if (!keycloak?.token) {
+      setChats([]);
+      return;
+    }
+
+    setLoadingChats(true);
+    try {
+      const { data, error } = await apiClient.GET('/chats', {
+        headers: { Authorization: `Bearer ${keycloak.token}` },
+      });
+      if (error) throw new Error(getApiErrorMessage(error));
+      setChats(data ?? []);
+    } finally {
+      setLoadingChats(false);
+    }
+  }, [keycloak]);
 
   useEffect(() => {
-    saveToStorage('messages', messages);
-  }, [messages]);
-
-  const totalUnreadMessages = messages.filter((m) => {
-    if (!currentUsername || m.senderId === currentUsername || m.isRead) return false;
-    
-    const parts = m.chatId.split('_');
-    const isParticipant = parts[1] === currentUsername || parts[2] === currentUsername;
-    
-    return isParticipant;
-  }).length;
-
-  const sendMessage = useCallback((chatId: string, text: string) => {
-    if (!currentUsername) return;
-    const newMsg: ChatMessage = {
-      id: String(Date.now()),
-      chatId,
-      senderId: currentUsername,
-      text,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-    };
-    setMessages((prev) => [...prev, newMsg]);
-
-    const [adId, user1, user2] = chatId.split('_');
-    const recipient = user1 === currentUsername ? user2 : user1;
-    const ad = ads.find(a => a.id === adId);
-    
-    if (ad) {
-      const message = `Новое сообщение по объявлению "${ad.title}" от ${currentUsername}`;
-      addNotification(recipient, message, `/messenger?chatId=${chatId}`);
+    if (!authtrue) {
+      setChats([]);
+      setMessagesByChat({});
+      return;
     }
-  }, [currentUsername, ads, addNotification]);
 
-  const markChatAsRead = useCallback((chatId: string) => {
-    if (!currentUsername) return;
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.chatId === chatId && m.senderId !== currentUsername ? { ...m, isRead: true } : m
-      )
+    reloadChats().catch((error) =>
+      console.error('Failed to load chats:', error),
     );
-  },[currentUsername]);
+  }, [authtrue, reloadChats]);
 
-  const getMessagesForChat = useCallback((chatId: string) => {
-    return messages
-        .filter((m) => m.chatId === chatId)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  },[messages]);
+  const loadMessages = useCallback(
+    async (chatId: string) => {
+      if (!keycloak?.token) throw new Error('Требуется авторизация');
 
-  const getChatsList = useCallback((): ChatListItem[] => {
-    if (!currentUsername) return [];
+      const { data, error } = await apiClient.GET(
+        '/chats/{chatId}/messages',
+        {
+          params: { path: { chatId } },
+          headers: { Authorization: `Bearer ${keycloak.token}` },
+        },
+      );
+      if (error) throw new Error(getApiErrorMessage(error));
 
-    const myMessages = messages.filter((m) => {
-        const parts = m.chatId.split('_');
-        return parts[1] === currentUsername || parts[2] === currentUsername;
-    });
+      const messages = data ?? [];
+      setMessagesByChat((previous) => ({ ...previous, [chatId]: messages }));
+      setChats((previous) =>
+        previous.map((chat) =>
+          chat.chatId === chatId ? { ...chat, unreadCount: 0 } : chat,
+        ),
+      );
 
-    const chatsMap = new Map<string, ChatMessage[]>();
-    myMessages.forEach((m) => {
-      if (!chatsMap.has(m.chatId)) chatsMap.set(m.chatId, []);
-      chatsMap.get(m.chatId)!.push(m);
-    });
+      return messages;
+    },
+    [keycloak],
+  );
 
-    const chatItems: ChatListItem[] = [];
-    chatsMap.forEach((msgs, chatId) => {
-      const [adId, seller, buyer] = chatId.split('_');
-      const ad = ads.find((a) => a.id === adId);
-      if (!ad) return;
+  const sendMessage = useCallback(
+    async (chatId: string, text: string) => {
+      if (!keycloak?.token) throw new Error('Требуется авторизация');
 
-      const sortedMsgs = msgs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      const lastMessage = sortedMsgs[0];
-      const otherUser = seller === currentUsername ? buyer : seller;
-      const unreadCount = msgs.filter((m) => m.senderId !== currentUsername && !m.isRead).length;
+      const { data, error } = await apiClient.POST(
+        '/chats/{chatId}/messages',
+        {
+          params: { path: { chatId } },
+          body: { text },
+          headers: { Authorization: `Bearer ${keycloak.token}` },
+        },
+      );
+      if (error) throw new Error(getApiErrorMessage(error));
+      if (!data) throw new Error('Не удалось отправить сообщение');
 
-      chatItems.push({ chatId, ad, otherUser, lastMessage, unreadCount });
-    });
+      setMessagesByChat((previous) => ({
+        ...previous,
+        [chatId]: [...(previous[chatId] ?? []), data],
+      }));
 
-    return chatItems.sort((a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime());
-  },[messages,ads,currentUsername]);
+      await reloadChats().catch(() => undefined);
+    },
+    [keycloak, reloadChats],
+  );
+
+  const getMessagesForChat = useCallback(
+    (chatId: string) => messagesByChat[chatId] ?? [],
+    [messagesByChat],
+  );
+
+  const totalUnreadMessages = chats.reduce(
+    (total, chat) => total + chat.unreadCount,
+    0,
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      chats,
+      totalUnreadMessages,
+      loadingChats,
+      reloadChats,
+      getMessagesForChat,
+      loadMessages,
+      sendMessage,
+    }),
+    [
+      chats,
+      totalUnreadMessages,
+      loadingChats,
+      reloadChats,
+      getMessagesForChat,
+      loadMessages,
+      sendMessage,
+    ],
+  );
 
   return (
-    <ChatContext.Provider value={{ messages, totalUnreadMessages, sendMessage, markChatAsRead, getMessagesForChat, getChatsList }}>
-      {children}
-    </ChatContext.Provider>
+    <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
   );
 };

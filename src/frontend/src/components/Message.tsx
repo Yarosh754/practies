@@ -1,7 +1,9 @@
 import { useAuth } from '../contexts/AuthContext';
-import type { ChatMessage } from '../types';
+import type { components } from '../api/schema';
 import { formatDate } from '../utils/dateUtils';
 import './Message.css';
+
+type ChatMessage = components['schemas']['ChatMessage'];
 
 interface MessageProps {
   message: ChatMessage;

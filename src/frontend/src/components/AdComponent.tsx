@@ -3,7 +3,7 @@ import Favorites from './Favorites';
 import { formatDate } from '../utils/dateUtils';
 import ImageComponent from './ImageComponent';
 
-interface AdComponent{
+interface AdComponentProps {
   adId: string;
   title: string;
   price: number;
@@ -12,7 +12,7 @@ interface AdComponent{
   date: string;
 }
 
-function AdComponent({adId,title,price,image,location,date,}: AdComponent){
+function AdComponent({adId,title,price,image,location,date,}: AdComponentProps){
 
   return (
     <div className='adComponent-main-container'>

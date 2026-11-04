@@ -1,73 +1,105 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {createContext,useCallback,useContext,useEffect,useMemo,useState,type ReactNode,} from 'react';
+import { apiClient } from '../api/client';
+import { getApiErrorMessage } from '../api/helpers';
 import { useAuth } from './AuthContext';
-import { useAds } from './AdContext';
-import { loadFromStorage, saveToStorage } from '../storage/storage';
-import type { FavoriteUser } from '../types';
 
 interface FavoritesContextType {
   favorites: string[];
+  loading: boolean;
   isFavorite: (adId: string) => boolean;
-  toggleFavorite: (adId: string) => void;
+  toggleFavorite: (adId: string) => Promise<void>;
+  reload: () => Promise<void>;
 }
 
-const FavoritesContext = createContext<FavoritesContextType>({
-  favorites: [],
-  isFavorite: () => false,
-  toggleFavorite: () => {},
-});
+const FavoritesContext = createContext<FavoritesContextType | null>(null);
 
-export const useFavorites = () => useContext(FavoritesContext);
+export const useFavorites = () => {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error('useFavorites должен использоваться внутри FavoritesProvider');
+  }
+  return context;
+};
 
 export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
-  const { ads } = useAds();
-  const userId = user?.id ?? null;
+  const { keycloak, authtrue } = useAuth();
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [allFavorites, setAllFavorites] = useState<FavoriteUser[]>(() =>
-    loadFromStorage<FavoriteUser[]>('favorites', []),
+  const reload = useCallback(async () => {
+    if (!keycloak?.token) {
+      setFavorites([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await apiClient.GET('/favorites', {
+        headers: { Authorization: `Bearer ${keycloak.token}` },
+      });
+      if (error) throw new Error(getApiErrorMessage(error));
+      setFavorites(data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [keycloak]);
+
+  useEffect(() => {
+    if (!authtrue) {
+      setFavorites([]);
+      return;
+    }
+
+    reload().catch((error) =>
+      console.error('Failed to load favorites:', error),
+    );
+  }, [authtrue, reload]);
+
+  const isFavorite = useCallback(
+    (adId: string) => favorites.includes(adId),
+    [favorites],
   );
 
-  useEffect(() => {
-    saveToStorage('favorites', allFavorites);
-  }, [allFavorites]);
+  const toggleFavorite = useCallback(
+    async (adId: string) => {
+      if (!keycloak?.token) throw new Error('Требуется авторизация');
 
-  useEffect(() => {
-    const inactiveIds = new Set(
-      ads.filter((a) => a.status !== 'ACTIVE').map((a) => a.id),
-    );
-    if (inactiveIds.size === 0) return;
+      const headers = { Authorization: `Bearer ${keycloak.token}` };
+      const alreadyFavorite = favorites.includes(adId);
 
-    setAllFavorites((prev) => {
-      const next = prev.filter((f) => !inactiveIds.has(f.adId));
-      return next.length === prev.length ? prev : next;
-    });
-  }, [ads]);
-
-  const favorites = userId ? allFavorites.filter((f) => f.userId === userId).map((f) => f.adId) : [];
-
-  const isFavorite = (adId: string) => favorites.includes(adId);
-
-  const toggleFavorite = (adId: string) => {
-    if (!userId) return;
-
-    const ad = ads.find((a) => a.id === adId);
-    if (!ad) return;
-
-    setAllFavorites((prev) => {
-      const exists = prev.some((f) => f.userId === userId && f.adId === adId);
-
-      if (exists) {
-        return prev.filter((f) => !(f.userId === userId && f.adId === adId));
+      if (alreadyFavorite) {
+        const { error } = await apiClient.DELETE('/favorites/{adId}', {
+          params: { path: { adId } },
+          headers,
+        });
+        if (error) throw new Error(getApiErrorMessage(error));
+        setFavorites((previous) => previous.filter((id) => id !== adId));
+        return;
       }
 
-      if (ad.status !== 'ACTIVE') return prev;
+      const { error } = await apiClient.POST('/favorites', {
+        body: { adId },
+        headers,
+      });
+      if (error) throw new Error(getApiErrorMessage(error));
+      setFavorites((previous) => [...previous, adId]);
+    },
+    [keycloak, favorites],
+  );
 
-      return [...prev, { userId, adId }];
-    });
-  };
+  const contextValue = useMemo(
+    () => ({
+      favorites,
+      loading,
+      isFavorite,
+      toggleFavorite,
+      reload,
+    }),
+    [favorites, loading, isFavorite, toggleFavorite, reload],
+  );
 
   return (
-    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite }}>
+    <FavoritesContext.Provider value={contextValue}>
       {children}
     </FavoritesContext.Provider>
   );

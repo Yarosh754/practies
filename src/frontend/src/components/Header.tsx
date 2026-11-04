@@ -10,10 +10,10 @@ const NOTICE = '/icons/notice.png';
 function Header() {
   const { authtrue, user, keycloak } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = keycloak?.realmAccess?.roles.includes('admin');
+  const isAdmin = Boolean(keycloak?.realmAccess?.roles?.includes('admin'));
   const { unreadCount } = useNotifications();
   const { totalUnreadMessages } = useChat();
-  
+
   const handleLogin = () => {
     navigate('/auth');
   };
@@ -24,19 +24,19 @@ function Header() {
         <div className="header-logo">
           <Link to='/'>Kufar</Link>
         </div>
-        
+
         {authtrue && (
           <Link to="/notifications" className="header-notice">
             <img src={NOTICE} alt="Уведомления" className="header-notice-img" />
             {unreadCount > 0 && <span className="header-notice-badge">{unreadCount}</span>}
           </Link>
         )}
-        
+
         <nav className="header-nav">
           {isAdmin && <Link to='/moderate'>Модерация</Link>}
-          
+
           {authtrue && <Link to='/myAds'>Мои объявления</Link>}
-          
+
           {authtrue && (
             <Link to='/messenger' className="header-message-link">
               Сообщения
@@ -45,16 +45,16 @@ function Header() {
               )}
             </Link>
           )}
-          
+
           <Link to='/'>Объявления</Link>
-          
+
           <div className='header-buttons'>
             {authtrue && (
               <button className='header-createAd-button'>
                 <Link to='/createAd'>Подать объявление</Link>
               </button>
             )}
-            
+
             {!authtrue ? (
               <button className='header-login-button' onClick={handleLogin}>
                 Вход
@@ -62,7 +62,7 @@ function Header() {
             ) : (
               <Link to='/account' className="header-account-link">
                 <img src={PERSONAL_ACCOUNT} alt="" className="header-account-img" />
-                <div className='header-user'>{user.firstName}</div>
+                <div className='header-user'>{user?.firstName ?? user?.username ?? ''}</div>
               </Link>
             )}
           </div>

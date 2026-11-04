@@ -1,4 +1,6 @@
-import { getImageFromStorage } from '../storage/imageStorage';
+import { useState } from 'react';
+import { getImageUrl } from '../api/helpers';
+import './ImageComponent.css';
 
 interface ImageComponentProps {
   src: string;
@@ -6,14 +8,20 @@ interface ImageComponentProps {
   alt?: string;
 }
 
-function ImageComponent({ src, className, alt = '' }: ImageComponentProps) {
-  const base64 = getImageFromStorage(src);
+function ImageComponent({ src, className = '', alt = '' }: ImageComponentProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
 
-  if (!base64) {
-    return <div className={className} style={{ background: '#eef1f4' }} />;
+  if (!src || failed) {
+    return (
+      <div className={`image-component-placeholder ${className}`.trim()} aria-hidden="true"/>
+    );
   }
 
-  return <img src={base64} className={className} alt={alt} />;
+  return (
+    <img src={getImageUrl(src)} className={className} alt={alt} loading="lazy"onError={() => setFailedSrc(src)}
+    />
+  );
 }
 
 export default ImageComponent;

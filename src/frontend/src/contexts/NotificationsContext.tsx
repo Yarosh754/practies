@@ -1,71 +1,119 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import {createContext,useCallback,useContext,useEffect,useMemo,useState,type ReactNode,} from 'react';
+import { apiClient } from '../api/client';
+import { getApiErrorMessage } from '../api/helpers';
+import type { components } from '../api/schema';
 import { useAuth } from './AuthContext';
-import { loadFromStorage, saveToStorage } from '../storage/storage';
-import type { Notification } from '../types';
+
+type Notification = components['schemas']['Notification'];
 
 interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (targetUsername: string, message: string, link?: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
+  loading: boolean;
+  reload: () => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  clearAll: () => Promise<void>;
 }
 
-const NotificationsContext = createContext<NotificationsContextType>({
-  notifications: [],
-  unreadCount: 0,
-  addNotification: () => {},
-  markAllAsRead: () => {},
-  clearAll: () => {},
-});
+const NotificationsContext =
+  createContext<NotificationsContextType | null>(null);
 
-export const useNotifications = () => useContext(NotificationsContext);
+export const useNotifications = () => {
+  const context = useContext(NotificationsContext);
+  if (!context) {
+    throw new Error(
+      'useNotifications должен использоваться внутри NotificationsProvider',
+    );
+  }
+  return context;
+};
 
 export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
-  const currentUsername = user?.username ?? null; 
+  const { keycloak, authtrue } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [allNotifications, setAllNotifications] = useState<Notification[]>(() =>
-    loadFromStorage<Notification[]>('notifications', []),
-  );
+  const reload = useCallback(async () => {
+    if (!keycloak?.token) {
+      setNotifications([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await apiClient.GET('/notifications', {
+        headers: { Authorization: `Bearer ${keycloak.token}` },
+      });
+      if (error) throw new Error(getApiErrorMessage(error));
+      setNotifications(data ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, [keycloak]);
 
   useEffect(() => {
-    saveToStorage('notifications', allNotifications);
-  }, [allNotifications]);
+    if (!authtrue) {
+      setNotifications([]);
+      return;
+    }
 
-  const notifications = currentUsername ? allNotifications
-        .filter((n) => n.username === currentUsername)
-        .sort((a, b) => b.createdAt - a.createdAt)
-    : [];
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const addNotification = useCallback((targetUsername: string, message: string, link?: string) => {
-    const newNotification: Notification = {
-      id: String(Date.now() + Math.random()),
-      username: targetUsername,
-      message,
-      createdAt: Date.now(),
-      read: false,
-      link,
-    };
-    setAllNotifications((prev) => [...prev, newNotification]);
-  }, []);
-
-  const markAllAsRead = useCallback(() => {
-    if (!currentUsername) return;
-    setAllNotifications((prev) =>
-      prev.map((n) => (n.username === currentUsername ? { ...n, read: true } : n)),
+    reload().catch((error) =>
+      console.error('Failed to load notifications:', error),
     );
-  }, [currentUsername]);
+  }, [authtrue, reload]);
 
-  const clearAll = useCallback(() => {
-    if (!currentUsername) return;
-    setAllNotifications((prev) => prev.filter((n) => n.username !== currentUsername));
-  }, [currentUsername]);
+  useEffect(() => {
+    if (!authtrue) return;
+
+    const intervalId = window.setInterval(() => {
+      reload().catch(() => undefined);
+    }, 20000);
+
+    return () => window.clearInterval(intervalId);
+  }, [authtrue, reload]);
+
+  const markAllAsRead = useCallback(async () => {
+    if (!keycloak?.token) return;
+
+    const { error } = await apiClient.PATCH('/notifications/read', {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    });
+    if (error) throw new Error(getApiErrorMessage(error));
+
+    setNotifications((previous) =>
+      previous.map((notification) => ({ ...notification, read: true })),
+    );
+  }, [keycloak]);
+
+  const clearAll = useCallback(async () => {
+    if (!keycloak?.token) return;
+
+    const { error } = await apiClient.DELETE('/notifications', {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    });
+    if (error) throw new Error(getApiErrorMessage(error));
+
+    setNotifications([]);
+  }, [keycloak]);
+
+  const unreadCount = notifications.filter(
+    (notification) => !notification.read,
+  ).length;
+
+  const contextValue = useMemo(
+    () => ({
+      notifications,
+      unreadCount,
+      loading,
+      reload,
+      markAllAsRead,
+      clearAll,
+    }),
+    [notifications, unreadCount, loading, reload, markAllAsRead, clearAll],
+  );
 
   return (
-    <NotificationsContext.Provider value={{ notifications, unreadCount, addNotification, markAllAsRead, clearAll }}>
+    <NotificationsContext.Provider value={contextValue}>
       {children}
     </NotificationsContext.Provider>
   );

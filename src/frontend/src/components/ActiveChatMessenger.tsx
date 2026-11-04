@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import type { Ad, ChatMessage } from '../types';
+import type { components } from '../api/schema';
 import Message from './Message';
 import './ActiveChatMessenger.css';
+
+type Ad = components['schemas']['Ad'];
+type ChatMessage = components['schemas']['ChatMessage'];
 
 const SEND_MESSAGE = '/icons/send-message.png';
 
@@ -10,10 +13,11 @@ interface ActiveChatMessengerProps {
   ad: Ad;
   otherUser: string;
   messages: ChatMessage[];
+  sending: boolean;
   onSendMessage: (text: string) => void;
 }
 
-function ActiveChatMessenger({ ad, otherUser, messages, onSendMessage }: ActiveChatMessengerProps) {
+function ActiveChatMessenger({ad, otherUser, messages, sending, onSendMessage,}: ActiveChatMessengerProps) {
   const [text, setText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +27,7 @@ function ActiveChatMessenger({ ad, otherUser, messages, onSendMessage }: ActiveC
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || sending) return;
     onSendMessage(text.trim());
     setText('');
   };
@@ -49,8 +53,8 @@ function ActiveChatMessenger({ ad, otherUser, messages, onSendMessage }: ActiveC
 
       <form className="activechat-input-container" onSubmit={handleSend}>
         <input type="text" className="activechat-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="Напишите сообщение" />
-        <button type="submit" className="activechat-send-button">
-            <img src={SEND_MESSAGE} alt='' className="send-message-img" />
+        <button type="submit" className="activechat-send-button" disabled={sending} >
+          <img src={SEND_MESSAGE} alt="" className="send-message-img" />
         </button>
       </form>
     </div>

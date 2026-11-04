@@ -1,4 +1,4 @@
-import { useAuth } from "../contexts/AuthContext" 
+import { useAuth } from "../contexts/AuthContext"
 import './Account.css';
 
 function Account() {
@@ -14,10 +14,10 @@ function Account() {
         <p className="p-account">Аккаунт</p>
       </div>
       <div className="account-name-container">
-        <p className="p-account-name">Имя: {user.firstName} {user.lastName}</p>
+        <p className="p-account-name">Имя: {user?.firstName ?? ''} {user?.lastName ?? ''}</p>
       </div>
       <div className="account-email-container">
-        <p className="p-account-email">Email: {user.email}</p>
+        <p className="p-account-email">Email: {user?.email ?? ''}</p>
       </div>
       <div className="account-exit-container">
         <button onClick={handleLogout} className="account-exit-button">
